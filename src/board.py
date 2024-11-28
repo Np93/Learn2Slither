@@ -3,10 +3,15 @@ from src.snake import Snake
 import random
 
 class Board:
-    def __init__(self, size=10, victory_condition=10):
+    def __init__(self, size=10, victory_condition=10, rewards=None):
         self.size = size
         self.victory_condition = victory_condition
-        # self.snake = Snake(self.generate_snake(), size)  # Utilisation de la classe Snake
+        self.rewards = rewards or {
+            "green_apple": 10,
+            "red_apple": -5,
+            "move_without_eating": -1,
+            "collision": -50,
+        }
         self.snake, self.direction = self.generate_snake()
         self.green_apples = []
         self.red_apples = []
@@ -101,7 +106,7 @@ class Board:
             self.snake.grow_at_tail()
             # self.snake.move(direction, grow=True)  # Le serpent grandit
             self.generate_apple("green")  # Générer une nouvelle pomme verte
-            self.score += 1
+            return "green"
         elif new_head in self.red_apples:
             print("Pomme rouge mangée.")
             self.red_apples.remove(new_head)
@@ -110,6 +115,7 @@ class Board:
                 print("Le serpent est mort après avoir mangé une pomme rouge.")
                 return False
             self.generate_apple("red")  # Générer une nouvelle pomme rouge
+            return "red"
 
         return True
 
@@ -130,6 +136,60 @@ class Board:
                 state[x][y] = "R"
 
         return state
+
+    def get_vision(self):
+        """
+        Détermine ce que le serpent voit dans les 4 directions depuis sa tête.
+        Chaque direction est explorée jusqu'à ce qu'un mur soit rencontré.
+        Retourne un dictionnaire indiquant la vision complète dans chaque direction.
+        """
+        vision = {"up": [], "down": [], "left": [], "right": []}
+        head_x, head_y = self.snake.get_body()[0]  # Tête du serpent
+
+        directions = {
+            "up": (-1, 0),    # Vers le haut
+            "down": (1, 0),   # Vers le bas
+            "left": (0, -1),  # Vers la gauche
+            "right": (0, 1)   # Vers la droite
+        }
+
+        for dir_name, (dx, dy) in directions.items():
+            x, y = head_x, head_y
+            while True:
+                x += dx
+                y += dy
+                # Vérifier les limites du plateau
+                if not (0 <= x < self.size and 0 <= y < self.size):
+                    vision[dir_name].append("W")  # Mur rencontré
+                    break
+                # Vérifier si c'est une pomme verte
+                elif (x, y) in self.green_apples:
+                    vision[dir_name].append("G")  # Continue après la pomme verte
+                # Vérifier si c'est une pomme rouge
+                elif (x, y) in self.red_apples:
+                    vision[dir_name].append("R")  # Continue après la pomme rouge
+                # Vérifier si c'est une partie du corps
+                elif (x, y) in self.snake.get_body():
+                    vision[dir_name].append("S")  # Continue après le corps
+                else:
+                    vision[dir_name].append("0")  # Case vide
+
+        return vision
+
+    def calculate_reward(self, action_result):
+        """
+        Calcule la récompense en fonction du résultat de l'action.
+        :param action_result: Résultat de l'action ("green", "red", None ou False).
+        :return: Récompense associée.
+        """
+        if action_result == "green":
+            return self.rewards["green_apple"]
+        elif action_result == "red":
+            return self.rewards["red_apple"]
+        elif action_result is False:  # Collision
+            return self.rewards["collision"]
+        else:
+            return self.rewards["move_without_eating"]
 
     def is_victory(self):
         """
