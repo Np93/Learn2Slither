@@ -96,12 +96,10 @@ class Game:
             if not result:  # Collision
                 print("Game Over!")
                 self.running = False
-                self.display.show_end_screen(
+                self.handle_end_screen(
                     title="Game Over",
-                    score=self.score,
-                    elapsed_time=elapsed_time,
-                    snake_length=len(self.board.snake.get_body()),
-                    reason="Collision"
+                    reason="Collision",
+                    elapsed_time=elapsed_time
                 )
                 break
 
@@ -109,12 +107,10 @@ class Game:
             if self.board.is_victory():
                 print("Victoire !")
                 self.running = False
-                self.display.show_end_screen(
+                self.handle_end_screen(
                     title="Victory",
-                    score=self.score,
-                    elapsed_time=elapsed_time,
-                    snake_length=len(self.board.snake.get_body()),
-                    reason="Length achieved"
+                    reason="Length achieved",
+                    elapsed_time=elapsed_time
                 )
                 break
 
@@ -128,6 +124,29 @@ class Game:
                 )
 
             clock.tick(self.speed)
+
+    def handle_end_screen(self, title, reason, elapsed_time):
+        """
+        Gère l'affichage de l'écran de fin ou des messages dans la console.
+        :param title: "Victory" ou "Game Over".
+        :param reason: La raison de la fin ("Length achieved" ou "Collision").
+        :param elapsed_time: Temps écoulé en secondes.
+        """
+        if self.display_enabled and self.display:
+            self.display.show_end_screen(
+                title=title,
+                score=self.score,
+                elapsed_time=elapsed_time,
+                snake_length=len(self.board.snake.get_body()),
+                reason=reason
+            )
+        else:
+            # Afficher les informations dans la console si l'affichage est désactivé
+            print(f"{title}!")
+            print(f"Reason: {reason}")
+            print(f"Score: {self.score}")
+            print(f"Time elapsed: {elapsed_time:.1f}s")
+            print(f"Snake length: {len(self.board.snake.get_body())}")
     
     # def run(self):
     #     """Boucle principale du jeu."""
