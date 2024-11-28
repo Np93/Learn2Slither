@@ -1,0 +1,139 @@
+# Classe "Board" pour gérer le plateau
+from src.snake import Snake
+import random
+
+class Board:
+    def __init__(self, size=10, victory_condition=10):
+        self.size = size
+        self.victory_condition = victory_condition
+        # self.snake = Snake(self.generate_snake(), size)  # Utilisation de la classe Snake
+        self.snake, self.direction = self.generate_snake()
+        self.green_apples = []
+        self.red_apples = []
+        self.score = 0
+        self.generate_apples()
+
+    def is_valid_head_position(self, x, y):
+        """Vérifie que la position de la tête n'est pas contre un mur avec un Game Over immédiat."""
+        # Directions possibles : haut, bas, gauche, droite
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        valid_moves = 0
+
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < self.size and 0 <= ny < self.size:
+                valid_moves += 1
+
+        return valid_moves >= 2  # Au moins deux directions possibles
+
+    def generate_snake(self):
+        """
+        Génère la position initiale du serpent et retourne également la direction initiale.
+        """
+        while True:
+            x = random.randint(1, self.size - 2)
+            y = random.randint(1, self.size - 2)
+
+            if self.is_valid_head_position(x, y):
+                directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+                random.shuffle(directions)
+
+                for direction in directions:
+                    snake_body = [(x, y), (x + direction[0], y + direction[1]), (x + 2 * direction[0], y + 2 * direction[1])]
+
+                    if all(0 <= sx < self.size and 0 <= sy < self.size for sx, sy in snake_body):
+                        direction_from_tail = (
+                            snake_body[0][0] - snake_body[1][0],  # x1 - x2
+                            snake_body[0][1] - snake_body[1][1]   # y1 - y2
+                        )
+                        return Snake(snake_body, self.size), direction_from_tail
+
+    def generate_apples(self):
+        """
+        Génère des pommes sur des cases libres.
+        """
+        all_positions = set((x, y) for x in range(self.size) for y in range(self.size))
+        occupied_positions = set(tuple(pos) for pos in self.snake.get_body())  # Convertit explicitement chaque segment en tuple
+        free_positions = list(all_positions - occupied_positions)
+
+        self.green_apples = random.sample(free_positions, 2)
+        free_positions = list(set(free_positions) - set(self.green_apples))
+        self.red_apples = random.sample(free_positions, 1)
+
+    def generate_apple(self, apple_type):
+        """
+        Génère une pomme unique sur une case libre, uniquement pour remplacer la pomme mangée.
+        :param apple_type: Le type de la pomme à générer ("green" ou "red").
+        """
+        # Générer toutes les positions possibles du plateau
+        all_positions = set((x, y) for x in range(self.size) for y in range(self.size))
+        
+        # Positions occupées par le serpent et les pommes existantes
+        occupied_positions = set(self.snake.get_body() + self.green_apples + self.red_apples)
+        
+        # Cases libres
+        free_positions = list(all_positions - occupied_positions)
+        
+        # Vérifier qu'il reste des cases libres
+        if free_positions:
+            new_apple = random.choice(free_positions)  # Choisir une position libre
+            if apple_type == "green":
+                self.green_apples.append(new_apple)  # Ajouter une nouvelle pomme verte
+            elif apple_type == "red":
+                self.red_apples.append(new_apple)
+
+    def move_snake(self, direction):
+        """
+        Déplace le serpent, gère les collisions et les interactions avec les pommes.
+        """
+        head = self.snake.get_body()[0]  # Tête actuelle
+        self.snake.move(direction, grow=False)
+
+        if not self.snake.is_alive():
+            print("Game Over!")
+            return False
+
+        # Gestion des pommes
+        new_head = self.snake.get_body()[0]
+        if new_head in self.green_apples:
+            print("Pomme verte mangée.")
+            self.green_apples.remove(new_head)
+            self.snake.grow_at_tail()
+            # self.snake.move(direction, grow=True)  # Le serpent grandit
+            self.generate_apple("green")  # Générer une nouvelle pomme verte
+            self.score += 1
+        elif new_head in self.red_apples:
+            print("Pomme rouge mangée.")
+            self.red_apples.remove(new_head)
+            self.snake.shrink()  # Rétrécit
+            if not self.snake.is_alive():
+                print("Le serpent est mort après avoir mangé une pomme rouge.")
+                return False
+            self.generate_apple("red")  # Générer une nouvelle pomme rouge
+
+        return True
+
+    def get_state(self):
+        """
+        Retourne l'état actuel du plateau (serpent et pommes).
+        """
+        state = [[" " for _ in range(self.size)] for _ in range(self.size)]
+
+        for x, y in self.snake.get_body():
+            if 0 <= x < self.size and 0 <= y < self.size:  # Vérifie que les indices sont valides
+                state[x][y] = "S"
+        for x, y in self.green_apples:
+            if 0 <= x < self.size and 0 <= y < self.size:  # Vérifie que les indices sont valides
+                state[x][y] = "G"
+        for x, y in self.red_apples:
+            if 0 <= x < self.size and 0 <= y < self.size:  # Vérifie que les indices sont valides
+                state[x][y] = "R"
+
+        return state
+
+    def is_victory(self):
+        """
+        Vérifie si la longueur du serpent atteint la condition de victoire (10 cellules).
+        :return: True si victoire, sinon False.
+        """
+        return len(self.snake.get_body()) >= self.victory_condition

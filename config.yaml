@@ -1,0 +1,4 @@
+board_size: 10  # Taille du plateau (10x10)
+speed: 2        # Vitesse en cases par seconde
+display: true   # Active ou désactive l'affichage graphique
+victory_condition: 4

@@ -1,0 +1,1 @@
+# Classe "Apple" pour gérer les pommes
