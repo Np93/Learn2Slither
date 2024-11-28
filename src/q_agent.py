@@ -25,14 +25,48 @@ class QLearningAgent:
         """Convertit la vision du serpent en clé pour la Q-table."""
         return tuple(tuple(row) for row in vision.values())
 
-    def choose_action(self, state_key):
-        """Choisit une action basée sur une stratégie epsilon-greedy."""
+    def choose_action(self, state_key, vision, current_direction=None):
+        """
+        Choisit une action basée sur une stratégie epsilon-greedy tout en respectant la vision du serpent.
+        :param state_key: Clé représentant l'état actuel du serpent.
+        :param vision: Vision actuelle du serpent (dictionnaire retourné par get_vision).
+        :param current_direction: Direction actuelle du serpent.
+        :return: Une action valide.
+        """
         if random.uniform(0, 1) < self.epsilon:  # Exploration
-            return random.choice(self.actions)
+            possible_actions = self.actions[:]
         else:  # Exploitation
             if state_key not in self.q_table:
                 self.q_table[state_key] = {action: 0 for action in self.actions}
-            return max(self.q_table[state_key], key=self.q_table[state_key].get)
+            possible_actions = [max(self.q_table[state_key], key=self.q_table[state_key].get)]
+
+        # Empêcher les demi-tours immédiats
+        if current_direction:
+            possible_actions = [
+                action for action in possible_actions
+                if tuple(map(lambda x, y: x + y, action, current_direction)) != (0, 0)
+            ]
+
+        # Filtrer les actions basées sur la vision
+        filtered_actions = []
+        for action, direction_name in zip(self.actions, ["up", "down", "left", "right"]):
+            if direction_name in vision:
+                # Vérifie si la direction est praticable (pas de collision immédiate)
+                if vision[direction_name][0] not in ["S", "W"]:
+                    filtered_actions.append(action)
+
+        possible_actions = [action for action in possible_actions if action in filtered_actions]
+        
+        # print(f"État actuel (state_key) : {state_key}")
+        print(f"Q-values associées : {self.q_table.get(state_key, {})}")
+        print(f"Actions possibles : {filtered_actions}")
+        # Retourner une action valide
+        if possible_actions:
+            return random.choice(possible_actions)
+        else:
+            # Si aucune action valide n'est disponible
+            print("Aucune action valide, choix aléatoire forcé")
+            return random.choice(self.actions)
 
     def update_q_value(self, state_key, action, reward, next_state_key):
         """Met à jour la valeur Q pour une action donnée."""

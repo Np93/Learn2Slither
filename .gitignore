@@ -117,3 +117,4 @@ local_disk/*
 tmp/
 backtest_data/
 **/*inmemory_cache_mock.yaml
+*save

@@ -67,6 +67,7 @@ class Game:
         start_time = pygame.time.get_ticks()
 
         while self.running:
+            # print(f"Tête actuelle : {self.board.snake.get_body()[0]}, Direction actuelle : {self.direction}")
             # Si en mode joueur, gérer les événements clavier
             if self.display_enabled and agent is None:
                 self.handle_events()
@@ -75,10 +76,20 @@ class Game:
 
             # Déterminer l'action
             if agent:
-                state_key = agent.get_state_key(self.board.get_vision())
-                action = agent.choose_action(state_key)
+                vision = self.board.get_vision()  # Obtenir la vision actuelle
+                state_key = agent.get_state_key(vision)
+                # print(f"Vision actuelle : {vision}")
+                action = agent.choose_action(
+                    state_key,
+                    vision=vision,
+                    current_direction=self.direction
+                )
+                # print(f"Action choisie par le modèle : {action}")
             else:
                 action = self.direction
+
+            # if agent and self.direction and tuple(map(lambda x, y: x + y, self.direction, action)) == (0, 0):
+            #     print("Action annulée : Demi-tour interdit")
 
             # Effectuer l'action et obtenir le résultat
             result = self.board.move_snake(action)
@@ -86,6 +97,7 @@ class Game:
             # Récompenser ou punir en mode train
             if agent:
                 reward = self.board.calculate_reward(result)
+                # print(reward)
                 if train:
                     next_state_key = agent.get_state_key(self.board.get_vision())
                     agent.update_q_value(state_key, action, reward, next_state_key)

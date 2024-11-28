@@ -29,9 +29,23 @@ def main():
     if mode == "player":
         game.run()
     elif mode == "train":
+        # Charger l'état actuel si disponible
+        try:
+            agent.load_model(f"models.pkl")
+            print("Modèle chargé à partir de la sauvegarde actuelle.")
+        except FileNotFoundError:
+            print("Aucun modèle actuel trouvé, démarrage à partir de zéro.")
+
+        # Boucle d'entraînement
         for session in range(1, training_sessions + 1):
             game.reset()
+            # print(f"Début de la session {session}/{training_sessions}")
             game.run(agent=agent, train=True)
+
+            # Sauvegarder le modèle pour la session actuelle
+            agent.save_model(f"models.pkl")
+
+            # Sauvegarder les modèles spécifiques pour les sessions importantes
             if session in {1, 10, 100}:
                 agent.save_model(f"{model_name}_{session}_sessions.pkl")
     elif mode == "model":

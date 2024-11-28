@@ -29,7 +29,7 @@ class Board:
             if 0 <= nx < self.size and 0 <= ny < self.size:
                 valid_moves += 1
 
-        return valid_moves >= 2  # Au moins deux directions possibles
+        return valid_moves > 2  # Au moins deux directions possibles
 
     def generate_snake(self):
         """
