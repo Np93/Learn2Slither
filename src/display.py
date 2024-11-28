@@ -103,4 +103,4 @@ class Display:
         pygame.display.flip()
 
         # Pause pour permettre au joueur de lire les informations
-        pygame.time.wait(10000)
+        pygame.time.wait(1000)

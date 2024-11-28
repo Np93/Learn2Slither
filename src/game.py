@@ -148,63 +148,21 @@ class Game:
             print(f"Time elapsed: {elapsed_time:.1f}s")
             print(f"Snake length: {len(self.board.snake.get_body())}")
     
-    # def run(self):
-    #     """Boucle principale du jeu."""
-    #     clock = pygame.time.Clock()
-    #     start_time = pygame.time.get_ticks()
+    def reset(self):
+        """
+        Réinitialise l'état du jeu pour une nouvelle session d'entraînement.
+        """
+        # Réinitialiser le plateau et la direction initiale
+        self.board = Board(size=self.board_size, victory_condition=self.victory_condition)
+        self.board.snake, self.direction = self.board.generate_snake()
 
-    #     while self.running:
-    #         # Gestion des événements
-    #         if self.display_enabled:
-    #             self.handle_events()
+        # Réinitialiser le score
+        self.score = 0
 
-    #         elapsed_time = (pygame.time.get_ticks() - start_time) / 1000
+        # Si l'affichage est activé, remettre l'écran à zéro
+        if self.display_enabled and self.display:
+            self.display.screen.fill((0, 0, 0))
+            pygame.display.flip()
 
-    #         # Récupérer ce que le serpent voit
-    #         # vision = self.board.get_vision()
-    #         # print(f"Vision du serpent : {vision}")  # Debug
-
-    #         # Mode modèle : déplace automatiquement le serpent
-    #         if self.mode == "model":
-    #             # Exemple simple : garder la direction actuelle
-    #             # (Vous pouvez remplacer cette logique par un modèle plus intelligent)
-    #             pass  # Ajoutez la logique ici
-
-    #         # Déplacement du serpent
-    #         result = self.board.move_snake(self.direction)
-    #         if result == "green":
-    #             self.score += 1  # Incrémente le score pour une pomme verte
-    #         elif not result:  # Collision ou fin de partie
-    #             print("Game Over!")
-    #             self.display.show_end_screen(
-    #                 title="Game Over",
-    #                 score=self.score,
-    #                 elapsed_time=elapsed_time,
-    #                 snake_length=len(self.board.snake.get_body()),
-    #                 reason="Collision"
-    #             )
-    #             break
-
-    #         # Vérifie la victoire
-    #         if self.board.is_victory():
-    #             print("Victoire !")
-    #             self.display.show_end_screen(
-    #                 title="Victory",
-    #                 score=self.score,
-    #                 elapsed_time=elapsed_time,
-    #                 snake_length=len(self.board.snake.get_body()),
-    #                 reason="Length achieved"
-    #             )
-    #             break
-
-    #         # Affichage
-    #         if self.display_enabled:
-    #             self.display.draw_board(
-    #                 self.board.get_state(),
-    #                 score=self.score,
-    #                 elapsed_time=elapsed_time,
-    #                 snake_length=len(self.board.snake.get_body())
-    #             )
-
-    #         # Pause en fonction de la vitesse
-    #         clock.tick(self.speed)
+        # Réactiver l'état de jeu
+        self.running = True
