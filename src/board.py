@@ -91,11 +91,16 @@ class Board:
         """
         Déplace le serpent, gère les collisions et les interactions avec les pommes.
         """
+        # print(f"direction avant self.dir...{self.direction}")
+        self.direction = direction
+        # print(f"direction apres self.dir...{self.direction}")
         head = self.snake.get_body()[0]  # Tête actuelle
         self.snake.move(direction, grow=False)
+        # print(f"direction apres mouvement {self.direction}")
 
         if not self.snake.is_alive():
             print("Game Over!")
+            # print(f"Tête après mouvement : {self.snake.get_body()[0]}")
             return False
 
         # Gestion des pommes
@@ -116,7 +121,7 @@ class Board:
                 return False
             self.generate_apple("red")  # Générer une nouvelle pomme rouge
             return "red"
-
+        # print(f"Tête après mouvement : {self.snake.get_body()[0]}")
         return True
 
     def get_state(self):
@@ -173,7 +178,7 @@ class Board:
                     vision[dir_name].append("S")  # Continue après le corps
                 else:
                     vision[dir_name].append("0")  # Case vide
-
+        # print(f"Vision calculée : {vision}")
         return vision
 
     def calculate_reward(self, action_result):
@@ -183,12 +188,16 @@ class Board:
         :return: Récompense associée.
         """
         if action_result == "green":
+            # print("pomme vert")
             return self.rewards["green_apple"]
         elif action_result == "red":
+            # print("pomme rouge")
             return self.rewards["red_apple"]
         elif action_result is False:  # Collision
+            # print("collision tout type")
             return self.rewards["collision"]
         else:
+            # print("bouge sans rien")
             return self.rewards["move_without_eating"]
 
     def is_victory(self):
@@ -197,3 +206,7 @@ class Board:
         :return: True si victoire, sinon False.
         """
         return len(self.snake.get_body()) >= self.victory_condition
+
+    def update_direction(self, new_direction):
+        """Met à jour la direction uniquement si elle ne correspond pas à un demi-tour."""
+        self.direction = new_direction

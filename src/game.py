@@ -41,15 +41,24 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                # Vérifie uniquement si la direction est opposée
-                if event.key == pygame.K_UP and self.direction != (1, 0):  # Pas de demi-tour vers le bas
-                    self.direction = (-1, 0)  # Haut
-                elif event.key == pygame.K_DOWN and self.direction != (-1, 0):  # Pas de demi-tour vers le haut
-                    self.direction = (1, 0)  # Bas
-                elif event.key == pygame.K_LEFT and self.direction != (0, 1):  # Pas de demi-tour vers la droite
-                    self.direction = (0, -1)  # Gauche
-                elif event.key == pygame.K_RIGHT and self.direction != (0, -1):  # Pas de demi-tour vers la gauche
-                    self.direction = (0, 1)  # Droite
+                new_direction = None
+                if event.key == pygame.K_UP:
+                    new_direction = (-1, 0)  # Haut
+                elif event.key == pygame.K_DOWN:
+                    new_direction = (1, 0)  # Bas
+                elif event.key == pygame.K_LEFT:
+                    new_direction = (0, -1)  # Gauche
+                elif event.key == pygame.K_RIGHT:
+                    new_direction = (0, 1)  # Droite
+
+                # Vérification des demi-tours uniquement pour les joueurs
+                if new_direction and self.board.direction:
+                    # Calculer si c'est un demi-tour
+                    is_reverse = tuple(map(lambda x, y: x + y, self.board.direction, new_direction)) == (0, 0)
+                    if not is_reverse:
+                        self.board.update_direction(new_direction)
+                    else:
+                        print("Tentative de demi-tour évitée pour le joueur.")
 
     def draw_score(self):
         """Affiche le score à côté du terrain."""
@@ -67,7 +76,6 @@ class Game:
         start_time = pygame.time.get_ticks()
 
         while self.running:
-            # print(f"Tête actuelle : {self.board.snake.get_body()[0]}, Direction actuelle : {self.direction}")
             # Si en mode joueur, gérer les événements clavier
             if self.display_enabled and agent is None:
                 self.handle_events()
@@ -77,19 +85,13 @@ class Game:
             # Déterminer l'action
             if agent:
                 vision = self.board.get_vision()  # Obtenir la vision actuelle
-                state_key = agent.get_state_key(vision)
-                # print(f"Vision actuelle : {vision}")
                 action = agent.choose_action(
-                    state_key,
                     vision=vision,
-                    current_direction=self.direction
                 )
-                # print(f"Action choisie par le modèle : {action}")
-            else:
-                action = self.direction
+                self.board.update_direction(action)
 
-            # if agent and self.direction and tuple(map(lambda x, y: x + y, self.direction, action)) == (0, 0):
-            #     print("Action annulée : Demi-tour interdit")
+            else:
+                action = self.board.direction
 
             # Effectuer l'action et obtenir le résultat
             result = self.board.move_snake(action)
@@ -97,10 +99,9 @@ class Game:
             # Récompenser ou punir en mode train
             if agent:
                 reward = self.board.calculate_reward(result)
-                # print(reward)
                 if train:
-                    next_state_key = agent.get_state_key(self.board.get_vision())
-                    agent.update_q_value(state_key, action, reward, next_state_key)
+                    next_vision = self.board.get_vision()
+                    agent.update_q_value(vision, action, reward, next_vision)
 
             if result == "green":
                 self.score += 1  # Incrémente le score pour une pomme verte
@@ -164,10 +165,12 @@ class Game:
         """
         Réinitialise l'état du jeu pour une nouvelle session d'entraînement.
         """
-        # Réinitialiser le plateau et la direction initiale
+        # Réinitialiser le plateau en utilisant Board
         self.board = Board(size=self.board_size, victory_condition=self.victory_condition)
-        self.board.snake, self.direction = self.board.generate_snake()
-
+        
+        # Récupérer le serpent et la direction initiale depuis le Board
+        self.board.snake, self.direction = self.board.snake, self.board.direction
+        
         # Réinitialiser le score
         self.score = 0
 

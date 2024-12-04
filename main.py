@@ -20,7 +20,7 @@ def main():
     model_name = config["model"]["name"]
 
     # Initialiser les actions et l'agent
-    actions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
     agent = QLearningAgent(board_size, actions, rewards)
 
     # Initialiser le jeu
@@ -39,7 +39,7 @@ def main():
         # Boucle d'entraînement
         for session in range(1, training_sessions + 1):
             game.reset()
-            # print(f"Début de la session {session}/{training_sessions}")
+            print(f"Début de la session {session}/{training_sessions}")
             game.run(agent=agent, train=True)
 
             # Sauvegarder le modèle pour la session actuelle
@@ -48,31 +48,20 @@ def main():
             # Sauvegarder les modèles spécifiques pour les sessions importantes
             if session in {1, 10, 100}:
                 agent.save_model(f"{model_name}_{session}_sessions.pkl")
+            agent.decay_epsilon()
+            print(
+                f"\nSession terminée. Nouvelle valeur d'epsilon : {agent.epsilon}\n")
     elif mode == "model":
-        agent.load_model(model_name)
+        agent.epsilon = 0.1
+        try:
+            agent.load_model(model_name)
+        except FileNotFoundError:
+            print(f"Erreur : Modèle {model_name} introuvable.")
+            return
+
         game.run(agent=agent, train=False)
     else:
         print("Mode invalide.")
-
-# def main():
-#     # Charger la configuration
-#     config = load_config()
-#     board_size = config.get("board_size", 10)
-#     speed = config.get("speed", 1)  # Cases par seconde
-#     display = config.get("display", True)
-#     victory_condition = config.get("victory_condition", 10)
-#     mode = config.get("mode", "player")
-
-#     # Initialiser le jeu
-#     game = Game(board_size, display, speed, victory_condition, mode)
-
-#     # Boucle principale
-#     try:
-#         game.run()
-#     except KeyboardInterrupt:
-#         print("\nJeu interrompu.")
-#     finally:
-#         pygame.quit()
 
 if __name__ == "__main__":
     main()

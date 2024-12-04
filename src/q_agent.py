@@ -1,16 +1,17 @@
 import random
 import os
 import pickle
+from collections import deque
 
 class QLearningAgent:
-    def __init__(self, board_size, actions, rewards, alpha=0.1, gamma=0.9, epsilon=1.0):
+    def __init__(self, board_size, actions, rewards, alpha=0.4, gamma=0.5, epsilon=0.95):
         """
         Initialise l'agent de Q-learning.
         :param board_size: Taille du plateau.
         :param actions: Liste des actions possibles [(0, 1), (0, -1), ...].
         :param rewards: Dictionnaire des récompenses.
         :param alpha: Taux d'apprentissage.
-        :param gamma: Facteur de discount pour les récompenses futures.
+        :param gamma: Facteur de prediction pour les récompenses futures.
         :param epsilon: Probabilité d'exploration.
         """
         self.board_size = board_size
@@ -21,72 +22,138 @@ class QLearningAgent:
         self.epsilon = epsilon
         self.q_table = {}  # Q-table dynamique
 
-    def get_state_key(self, vision):
-        """Convertit la vision du serpent en clé pour la Q-table."""
-        return tuple(tuple(row) for row in vision.values())
-
-    def choose_action(self, state_key, vision, current_direction=None):
+    def get_state_keys(self, vision):
         """
-        Choisit une action basée sur une stratégie epsilon-greedy tout en respectant la vision du serpent.
-        :param state_key: Clé représentant l'état actuel du serpent.
+        Extrait les états directionnels indépendamment des directions spécifiques.
+        :param vision: Dictionnaire des visions par direction.
+        :return: Dictionnaire des états par direction.
+        """
+        states = {}
+        for direction, cells in vision.items():
+            # L'état est uniquement basé sur ce qui est vu dans cette direction
+            state = []
+            for i, cell in enumerate(cells):
+                state.append(cell)
+                if cell in ["G", "S", "W", "R"]:  # Arrête au premier obstacle ou objet pertinent
+                    if cell == "G" and i + 1 < len(cells):  # Si c'est un "G", inclure une case supplémentaire
+                        state.append(cells[i + 1])
+                    break
+            states[direction] = tuple(state)
+        return states
+
+    def choose_action(self, vision):
+        """
+        Choisit une action basée sur les Q-values des états directionnels avec exploration.
         :param vision: Vision actuelle du serpent (dictionnaire retourné par get_vision).
-        :param current_direction: Direction actuelle du serpent.
-        :return: Une action valide.
+        :return: Une action valide (tuple représentant une direction, ex : (-1, 0)).
         """
-        if random.uniform(0, 1) < self.epsilon:  # Exploration
-            possible_actions = self.actions[:]
-        else:  # Exploitation
-            if state_key not in self.q_table:
-                self.q_table[state_key] = {action: 0 for action in self.actions}
-            possible_actions = [max(self.q_table[state_key], key=self.q_table[state_key].get)]
+        # Obtenir les états directionnels depuis la vision
+        states = self.get_state_keys(vision)  # Récupérer les états directionnels
+        q_values = {}  # Stocker les Q-values pour chaque direction
 
-        # Empêcher les demi-tours immédiats
-        if current_direction:
-            possible_actions = [
-                action for action in possible_actions
-                if tuple(map(lambda x, y: x + y, action, current_direction)) != (0, 0)
+        # Obtenir les Q-values pour chaque direction
+        for direction, state_key in states.items():
+            if state_key not in self.q_table:
+                self.q_table[state_key] = 0  # Initialiser la Q-value de cet état à 0
+            q_values[direction] = self.q_table[state_key]
+
+        print(f"Q-values directionnelles : {q_values}")
+
+        # Exploration vs exploitation
+        if random.uniform(0, 1) < self.epsilon:  # Exploration
+            # Filtrer les actions dangereuses
+            valid_actions = [
+                (action, direction) for action, (direction, state_key) in zip(self.actions, states.items())
+                if state_key[0] not in ["S", "W"]  # Exclure les états avec "S" ou "W" au premier élément
             ]
 
-        # Filtrer les actions basées sur la vision
-        filtered_actions = []
-        for action, direction_name in zip(self.actions, ["up", "down", "left", "right"]):
-            if direction_name in vision:
-                # Vérifie si la direction est praticable (pas de collision immédiate)
-                if vision[direction_name][0] not in ["S", "W"]:
-                    filtered_actions.append(action)
+            if valid_actions:
+                action, chosen_direction = random.choice(valid_actions)  # Choisir aléatoirement une action valide
+                print(f"Exploration choisie. Direction aléatoire sûre : {chosen_direction}")
+            else:
+                # Si aucune direction sûre, choisir une action aléatoire non filtrée
+                action, chosen_direction = random.choice(list(zip(self.actions, states.keys())))
+                print(f"Exploration choisie. Aucune direction sûre, direction aléatoire : {chosen_direction}")
+        else:  # Exploitation
+            chosen_direction = max(q_values, key=q_values.get)  # Direction avec la meilleure Q-value
+            action = self.actions[["up", "down", "left", "right"].index(chosen_direction)]
+            print(f"Exploitation choisie. Meilleure direction : {chosen_direction} avec Q-value : {q_values[chosen_direction]}")
 
-        possible_actions = [action for action in possible_actions if action in filtered_actions]
-        
-        # print(f"État actuel (state_key) : {state_key}")
-        print(f"Q-values associées : {self.q_table.get(state_key, {})}")
-        print(f"Actions possibles : {filtered_actions}")
-        # Retourner une action valide
-        if possible_actions:
-            return random.choice(possible_actions)
-        else:
-            # Si aucune action valide n'est disponible
-            print("Aucune action valide, choix aléatoire forcé")
-            return random.choice(self.actions)
+        # Traduire la direction en action
+        direction_to_action = {
+            "up": (-1, 0),
+            "down": (1, 0),
+            "left": (0, -1),
+            "right": (0, 1)
+        }
 
-    def update_q_value(self, state_key, action, reward, next_state_key):
-        """Met à jour la valeur Q pour une action donnée."""
-        if state_key not in self.q_table:
-            self.q_table[state_key] = {action: 0 for action in self.actions}
-        if next_state_key not in self.q_table:
-            self.q_table[next_state_key] = {action: 0 for action in self.actions}
+        # Imprimer les informations complètes pour le débogage
+        print(f"Vision : {vision}")
+        print(f"Direction choisie : {chosen_direction}, Action : {action}")
 
-        current_q = self.q_table[state_key][action]
-        max_future_q = max(self.q_table[next_state_key].values())
+        # Retourner uniquement l'action
+        return action
+
+    def update_q_value(self, vision, action, reward, next_vision):
+        """
+        Met à jour la Q-value associée à l'état directionnel (vision par direction).
+        :param vision: Vision actuelle (avant action).
+        :param action: Action effectuée.
+        :param reward: Récompense reçue.
+        :param next_vision: Vision après action.
+        """
+        # Récupérer les états directionnels avant et après
+        states = self.get_state_keys(vision)
+        next_states = self.get_state_keys(next_vision)
+
+        # Identifier l'état et la direction associés à l'action
+        action_to_direction = {
+            (-1, 0): "up",
+            (1, 0): "down",
+            (0, -1): "left",
+            (0, 1): "right"
+        }
+        current_direction = action_to_direction[action]
+        current_state = states[current_direction]
+        next_state = next_states[current_direction]
+
+        # Initialiser les Q-values si nécessaire
+        if current_state not in self.q_table:
+            self.q_table[current_state] = 0
+        if next_state not in self.q_table:
+            self.q_table[next_state] = 0
+
+        # Calculer la nouvelle Q-value
+        current_q = self.q_table[current_state]
+        max_future_q = self.q_table[next_state] if reward <= 0 else 0
         new_q = (1 - self.alpha) * current_q + self.alpha * (reward + self.gamma * max_future_q)
-        self.q_table[state_key][action] = new_q
+
+        # Mettre à jour la Q-value
+        self.q_table[current_state] = new_q
+        print(f"Update Q-value | État : {current_state} | Direction : {current_direction} | Récompense : {reward} "
+            f"| Ancienne Q : {current_q:.2f} | Nouvelle Q : {new_q:.2f} | Max future Q : {max_future_q:.2f}")
+
+
+    def decay_epsilon(self, min_epsilon=0.1, decay_rate=0.99):
+        self.epsilon = max(min_epsilon, self.epsilon * decay_rate)
 
     def save_model(self, filename):
-        """Sauvegarde la Q-table dans un fichier."""
-        os.makedirs("save", exist_ok=True)  # Crée le dossier si nécessaire
-        with open(f"save/{filename}", 'wb') as f:
-            pickle.dump(self.q_table, f)
+        os.makedirs("save", exist_ok=True)
+        try:
+            with open(f"save/{filename}", 'wb') as f:
+                pickle.dump(self.q_table, f)
+            # print(f"Modèle sauvegardé dans {filename}, nombre d'états : {len(self.q_table)}")
+        except Exception as e:
+            print(f"Erreur lors de la sauvegarde : {e}")
 
     def load_model(self, filename):
-        """Charge une Q-table à partir d'un fichier."""
-        with open(f"save/{filename}", 'rb') as f:
-            self.q_table = pickle.load(f)
+        try:
+            with open(f"save/{filename}", 'rb') as f:
+                self.q_table = pickle.load(f)
+            # print(f"Modèle chargé depuis {filename}, nombre d'états : {len(self.q_table)}")
+        except FileNotFoundError:
+            # print(f"Erreur : Le fichier {filename} est introuvable. Nouvelle table initialisée.")
+            self.q_table = {}  # Repartir de zéro
+        except Exception as e:
+            # print(f"Erreur lors du chargement : {e}")
+            self.q_table = {}  # Repartir de zéro
