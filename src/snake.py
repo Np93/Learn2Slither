@@ -23,7 +23,6 @@ class Snake:
         head_x, head_y = self.body[0]
         dx, dy = direction
         new_head = (head_x + dx, head_y + dy)
-        # print(direction)
 
         # Vérifier les collisions avec le mur et le corps
         if new_head in self.body or not (0 <= new_head[0] < self.size and 0 <= new_head[1] < self.size):
