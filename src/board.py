@@ -1,4 +1,3 @@
-# Classe "Board" pour gérer le plateau
 from src.snake import Snake
 import random
 
@@ -97,7 +96,7 @@ class Board:
         # print(f"direction avant self.dir...{self.direction}")
         self.direction = direction
         # print(f"direction apres self.dir...{self.direction}")
-        head = self.snake.get_body()[0]  # Tête actuelle
+
         self.snake.move(direction, grow=False)
         # print(f"direction apres mouvement {self.direction}")
 
@@ -105,12 +104,6 @@ class Board:
             print("Game Over!")
             # print(f"Tête après mouvement : {self.snake.get_body()[0]}")
             return False
-
-        new_head = self.snake.get_body()[0]
-        # Enregistrer les 9 dernières positions
-        self.recent_positions.append(new_head)
-        if len(self.recent_positions) > 15:
-            self.recent_positions.pop(0)
 
         # Gestion des pommes
         new_head = self.snake.get_body()[0]
@@ -207,23 +200,6 @@ class Board:
             reward += self.rewards["collision"]
         else:
             reward += self.rewards["move_without_eating"]
-
-        # Pénalité pour revisite récente
-        current_position = self.snake.get_body()[0]
-        if self.recent_positions.count(current_position) > 1:
-            penalty = self.rewards["repeat_penalty"]
-            reward += penalty
-            # print("repete penality")
-        else:
-            reward += self.rewards["exploration"]
-
-        head = self.snake.get_body()[0]
-        center_min = self.size // 4
-        center_max = 3 * (self.size // 4)
-
-        # Si la tête est en dehors de la zone centrale
-        if not (center_min <= head[0] <= center_max and center_min <= head[1] <= center_max):
-            reward += self.rewards.get("exploration", 10)
 
         return reward
 

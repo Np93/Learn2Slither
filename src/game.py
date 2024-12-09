@@ -1,4 +1,3 @@
-# Gestion de la logique principale du jeu
 import time
 import pygame
 from src.board import Board

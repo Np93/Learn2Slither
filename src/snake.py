@@ -1,4 +1,3 @@
-# Classe "Snake" pour gérer le serpent
 class Snake:
     def __init__(self, initial_position, size):
         """

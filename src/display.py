@@ -1,4 +1,3 @@
-# Classe ou fonctions pour gérer l'affichage (Pygame)
 import pygame
 
 class Display:

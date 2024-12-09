@@ -4,13 +4,13 @@ display: true   # Active ou désactive l'affichage graphique
 victory_condition: 10 # nombre de case de la taille du serpent pour definir la victoire
 mode: model  # Peut être "player" ou "model" ou train
 rewards:
-  green_apple: 5
-  red_apple: -5
+  green_apple: 50
+  red_apple: -45
   move_without_eating: -1
-  collision: -10
-  repeat_penalty: -2
-  exploration: 1
+  collision: -100
+  repeat_penalty: -3
+  exploration: 2
 training:
-  sessions: 100
+  sessions: 10000
 model:
-  name: "no_repet"
+  name: "no_repet.pkl"

@@ -4,7 +4,7 @@ import pickle
 from collections import deque
 
 class QLearningAgent:
-    def __init__(self, board_size, actions, rewards, alpha=0.3, gamma=0.7, epsilon=0.90):
+    def __init__(self, board_size, actions, rewards, alpha=0.4, gamma=0.9, epsilon=0.99):
         """
         Initialise l'agent de Q-learning.
         :param board_size: Taille du plateau.
@@ -22,135 +22,100 @@ class QLearningAgent:
         self.epsilon = epsilon
         self.q_table = {}  # Q-table dynamique
 
-    def get_state_keys(self, vision):
+    def get_global_state(self, vision):
         """
-        Extrait les états directionnels indépendamment des directions spécifiques.
+        Regroupe la vision de toutes les directions en une clé unique pour l'état global.
+        La vision dans chaque direction s'arrête lorsqu'on rencontre un 'S' ou un 'G'.
         :param vision: Dictionnaire des visions par direction.
-        :return: Dictionnaire des états par direction.
+        :return: Tuple représentant l'état global.
         """
-        states = {}
-        for direction, cells in vision.items():
-            # L'état est uniquement basé sur ce qui est vu dans cette direction
-            state = []
-            for i, cell in enumerate(cells):
-                state.append(cell)
-                if cell in ["G", "S", "W"]:  # Arrête au premier obstacle ou objet pertinent
-                    if cell == "G" and i + 1 < len(cells):  # Si c'est un "G", inclure une case supplémentaire
-                        state.append(cells[i + 1])
+        state = []
+        for direction in ["up", "down", "left", "right"]:  # Ordre fixe pour cohérence
+            cells = vision.get(direction, [])
+            truncated = []  # Vision tronquée
+            for cell in cells:
+                truncated.append(cell)
+                if cell in ["S", "G"]:  # Arrête la vision dès qu'on rencontre 'S' ou 'G'
                     break
-            states[direction] = tuple(state)
-        return states
+            state.append((direction, tuple(truncated)))  # Inclure direction et vision tronquée
+        return tuple(state)  # Retourne une structure immuable
 
     def choose_action(self, vision):
         """
-        Choisit une action basée sur les Q-values des états directionnels avec exploration.
-        :param vision: Vision actuelle du serpent (dictionnaire retourné par get_vision).
+        Choisit une action basée sur les Q-values de l'état global avec exploration.
+        :param vision: Vision actuelle du serpent.
         :return: Une action valide (tuple représentant une direction, ex : (-1, 0)).
         """
-        # Obtenir les états directionnels depuis la vision
-        states = self.get_state_keys(vision)  # Récupérer les états directionnels
-        q_values = {}  # Stocker les Q-values pour chaque direction
-
-        # Obtenir les Q-values pour chaque direction
-        for direction, state_key in states.items():
-            key = (state_key, direction)  # Inclure la direction dans la clé
-            if key not in self.q_table:
-                self.q_table[key] = 0  # Initialiser la Q-value si absente
-            q_values[direction] = self.q_table[key]
-
-        # print(f"Q-values directionnelles : {q_values}")
-        # print(vision)
+        # Obtenir l'état global
+        global_state = self.get_global_state(vision)
+        q_values = {}
+        
+        # Initialiser les Q-values pour chaque action si elles n'existent pas
+        for action in self.actions:
+            if (global_state, action) not in self.q_table:
+                self.q_table[(global_state, action)] = 0  # Initialiser à 0
+            q_values[action] = self.q_table[(global_state, action)]
+        
+        print("\nÉtat global:", global_state)
+        print("Q-values pour chaque direction:")
+        for action, q_value in q_values.items():
+            print(f"  Action: {action}, Q-value: {q_value}")
+        # Définir un seuil pour filtrer les Q-values trop basses
         THRESHOLD = -50
+
         # Exploration vs exploitation
         if random.uniform(0, 1) < self.epsilon:  # Exploration
-            # Filtrer les actions dangereuses
-            # valid_actions = [
-            #     (action, direction) for action, (direction, state_key) in zip(self.actions, states.items())
-            #     if state_key[0] not in ["S", "W"]  # Exclure les états avec "S" ou "W" au premier élément
-            # ]
+            # Filtrer les actions avec des Q-values au-dessus du seuil
             valid_actions = [
-                (action, direction)
-                for action, (direction, state_key) in zip(self.actions, states.items())
-                if self.q_table.get((state_key, direction), 0) > THRESHOLD  # Vérifiez la Q-value
+                action for action, (direction, state_key) in zip(self.actions, global_state)
+                if not (state_key and state_key[0] in ["W", "S"])  # Exclure si le premier élément est "W" ou "S"
             ]
 
             if valid_actions:
-                action, chosen_direction = random.choice(valid_actions)  # Choisir aléatoirement une action valide
-                # print(f"Exploration choisie. Direction aléatoire sûre : {chosen_direction}")
+                # Choisir aléatoirement une action parmi celles valides
+                action = random.choice(valid_actions)
             else:
-                # Si aucune direction sûre, choisir une action aléatoire non filtrée
-                action, chosen_direction = random.choice(list(zip(self.actions, states.keys())))
-                # print(f"Exploration choisie. Aucune direction sûre, direction aléatoire : {chosen_direction}")
+                # Si aucune action valide, choisir une action aléatoire
+                action = random.choice(self.actions)
         else:  # Exploitation
-            chosen_direction = max(q_values, key=q_values.get)  # Direction avec la meilleure Q-value
-            action = self.actions[["up", "down", "left", "right"].index(chosen_direction)]
-            # print(f"Exploitation choisie. Meilleure direction : {chosen_direction} avec Q-value : {q_values[chosen_direction]}")
-
-        # Traduire la direction en action
-        # direction_to_action = {
-        #     "up": (-1, 0),
-        #     "down": (1, 0),
-        #     "left": (0, -1),
-        #     "right": (0, 1)
-        # }
-
-        # Imprimer les informations complètes pour le débogage
-        # print(f"Vision : {vision}")
-        # print(f"Direction choisie : {chosen_direction}, Action : {action}")
-
-        # Retourner uniquement l'action
+            # Choisir l'action avec la meilleure Q-value
+            action = max(self.actions, key=lambda a: q_values[a])
+            print(f"Exploitation choisie. Meilleure direction : {action} avec Q-value : {q_values[action]}")
+        
         return action
-
+    
     def update_q_value(self, vision, action, reward, next_vision):
         """
-        Met à jour la Q-value associée à l'état directionnel (vision par direction).
+        Met à jour la Q-value associée à l'état global et à l'action.
         :param vision: Vision actuelle (avant action).
         :param action: Action effectuée.
         :param reward: Récompense reçue.
         :param next_vision: Vision après action.
         """
-        # Récupérer les états directionnels avant et après
-        states = self.get_state_keys(vision)
-        next_states = self.get_state_keys(next_vision)
-
-        # Identifier l'état et la direction associés à l'action
-        action_to_direction = {
-            (-1, 0): "up",
-            (1, 0): "down",
-            (0, -1): "left",
-            (0, 1): "right"
-        }
-        current_direction = action_to_direction[action]
-        current_state = states[current_direction]
-        next_state = next_states[current_direction]
-
-        # Clés de la Q-table
-        current_key = (current_state, current_direction)
-        next_key = (next_state, current_direction)
-
-        # Initialiser les Q-values si nécessaire
-        if current_key not in self.q_table:
-            self.q_table[current_key] = 0
-        if next_key not in self.q_table:
-            self.q_table[next_key] = 0
+        # Obtenir les états globaux avant et après
+        current_state = self.get_global_state(vision)
+        next_state = self.get_global_state(next_vision)
+        
+        # Initialiser les Q-values si nécessaires
+        if (current_state, action) not in self.q_table:
+            self.q_table[(current_state, action)] = 0
+        for next_action in self.actions:
+            if (next_state, next_action) not in self.q_table:
+                self.q_table[(next_state, next_action)] = 0
 
         # Calculer la nouvelle Q-value
-        current_q = self.q_table[current_key]
-        if "G" in current_state:
-            max_future_q = 0
-        else:
-            max_future_q = max(
-                self.q_table.get((next_state, dir_), 0) for dir_ in ["up", "down", "left", "right"]
-            )
+        current_q = self.q_table[(current_state, action)]
+        # if "G" in [cell for direction, cells in current_state for cell in cells]:
+        #     max_future_q = 0
+        # else:
+        max_future_q = max(self.q_table[(next_state, next_action)] for next_action in self.actions)
         new_q = (1 - self.alpha) * current_q + self.alpha * (reward + self.gamma * max_future_q)
 
-        # Mise à jour de la Q-value
-        self.q_table[current_key] = new_q
-        # print(f"Update Q-value | État : {current_state} | Direction : {current_direction} | Récompense : {reward} "
-        #     f"| Ancienne Q : {current_q:.2f} | Nouvelle Q : {new_q:.2f} | Max future Q : {max_future_q:.2f}")
+        # Mettre à jour la Q-value
+        self.q_table[(current_state, action)] = new_q
 
 
-    def decay_epsilon(self, min_epsilon=0.1, decay_rate=0.98):
+    def decay_epsilon(self, min_epsilon=0.1, decay_rate=0.99):
         self.epsilon = max(min_epsilon, self.epsilon * decay_rate)
 
     def save_model(self, filename):
