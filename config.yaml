@@ -8,9 +8,7 @@ rewards:
   red_apple: -45
   move_without_eating: -1
   collision: -100
-  repeat_penalty: -3
-  exploration: 2
 training:
   sessions: 10000
 model:
-  name: "no_repet.pkl"
+  name: "model.pkl"

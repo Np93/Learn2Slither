@@ -42,8 +42,6 @@ def show_lobby(screen, config):
             f"Red Apple Reward: {local_config['rewards']['red_apple']}",
             f"Collision Penalty: {local_config['rewards']['collision']}",
             f"Move Penalty: {local_config['rewards']['move_without_eating']}",
-            f"Repeat Penalty: {local_config['rewards']['repeat_penalty']}",
-            f"exploration: {local_config['rewards']['exploration']}",
             f"Display: {'ON' if local_config['display'] else 'OFF'}"
         ]
         param_positions = [100 + i * 50 for i in range(len(param_labels))]
@@ -78,29 +76,29 @@ def show_lobby(screen, config):
 
         # Zone de texte pour model_name
         model_label = font.render("Model Name:", True, (255, 255, 255))
-        screen.blit(model_label, (100, 650))
+        screen.blit(model_label, (100, 550))
 
         # Zone interactive
-        input_box = pygame.Rect(250, 650, 300, 36)
+        input_box = pygame.Rect(250, 550, 300, 36)
         pygame.draw.rect(screen, (255, 255, 255), input_box, 2 if input_active else 1)
         model_text = font.render(model_name, True, (255, 255, 255))
         screen.blit(model_text, (input_box.x + 10, input_box.y + 5))
 
         # Boutons principaux (Play, Train, Model, Quit)
-        play_button = pygame.Rect(100, 700, 150, 50)
-        train_button = pygame.Rect(270, 700, 150, 50)
-        model_button = pygame.Rect(440, 700, 150, 50)
-        quit_button = pygame.Rect(610, 700, 150, 50)
+        play_button = pygame.Rect(100, 600, 150, 50)
+        train_button = pygame.Rect(270, 600, 150, 50)
+        model_button = pygame.Rect(440, 600, 150, 50)
+        quit_button = pygame.Rect(610, 600, 150, 50)
 
         pygame.draw.rect(screen, (0, 255, 0), play_button)
         pygame.draw.rect(screen, (0, 0, 255), train_button)
         pygame.draw.rect(screen, (255, 255, 0), model_button)
         pygame.draw.rect(screen, (255, 0, 0), quit_button)
 
-        screen.blit(font.render("Play", True, (0, 0, 0)), (130, 715))
-        screen.blit(font.render("Train", True, (0, 0, 0)), (300, 715))
-        screen.blit(font.render("Model", True, (0, 0, 0)), (475, 715))
-        screen.blit(font.render("Quit", True, (0, 0, 0)), (640, 715))
+        screen.blit(font.render("Play", True, (0, 0, 0)), (130, 615))
+        screen.blit(font.render("Train", True, (0, 0, 0)), (300, 615))
+        screen.blit(font.render("Model", True, (0, 0, 0)), (475, 615))
+        screen.blit(font.render("Quit", True, (0, 0, 0)), (640, 615))
 
         pygame.display.flip()
 
@@ -185,15 +183,11 @@ def modify_config(config, index, decrement):
         config['rewards']['collision'] += -10 if decrement else 10
     elif index == 7:  # Move Penalty
         config['rewards']['move_without_eating'] += -1 if decrement else 1
-    elif index == 8:  # Repeat Penalty
-        config['rewards']['repeat_penalty'] += -1 if decrement else 1
-    elif index == 9:  # exploration
-        config['rewards']['exploration'] += -1 if decrement else 1
 
 def main():
     # Initialisation de Pygame
     pygame.init()
-    screen = pygame.display.set_mode((800, 800))
+    screen = pygame.display.set_mode((800, 700))
 
     # Charger la configuration
     config = load_config()

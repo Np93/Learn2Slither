@@ -56,12 +56,10 @@ class QLearningAgent:
                 self.q_table[(global_state, action)] = 0  # Initialiser à 0
             q_values[action] = self.q_table[(global_state, action)]
         
-        print("\nÉtat global:", global_state)
-        print("Q-values pour chaque direction:")
-        for action, q_value in q_values.items():
-            print(f"  Action: {action}, Q-value: {q_value}")
-        # Définir un seuil pour filtrer les Q-values trop basses
-        THRESHOLD = -50
+        # print("\nÉtat global:", global_state)
+        # print("Q-values pour chaque direction:")
+        # for action, q_value in q_values.items():
+        #     print(f"  Action: {action}, Q-value: {q_value}")
 
         # Exploration vs exploitation
         if random.uniform(0, 1) < self.epsilon:  # Exploration
@@ -80,7 +78,7 @@ class QLearningAgent:
         else:  # Exploitation
             # Choisir l'action avec la meilleure Q-value
             action = max(self.actions, key=lambda a: q_values[a])
-            print(f"Exploitation choisie. Meilleure direction : {action} avec Q-value : {q_values[action]}")
+            # print(f"Exploitation choisie. Meilleure direction : {action} avec Q-value : {q_values[action]}")
         
         return action
     
@@ -105,15 +103,11 @@ class QLearningAgent:
 
         # Calculer la nouvelle Q-value
         current_q = self.q_table[(current_state, action)]
-        # if "G" in [cell for direction, cells in current_state for cell in cells]:
-        #     max_future_q = 0
-        # else:
         max_future_q = max(self.q_table[(next_state, next_action)] for next_action in self.actions)
         new_q = (1 - self.alpha) * current_q + self.alpha * (reward + self.gamma * max_future_q)
 
         # Mettre à jour la Q-value
         self.q_table[(current_state, action)] = new_q
-
 
     def decay_epsilon(self, min_epsilon=0.1, decay_rate=0.99):
         self.epsilon = max(min_epsilon, self.epsilon * decay_rate)
