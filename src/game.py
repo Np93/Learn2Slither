@@ -66,11 +66,13 @@ class Game:
         score_position = (self.board_size * self.cell_size + 20, 20)  # Affichage sur la droite
         self.screen.blit(score_text, score_position)
 
-    def run(self, agent=None, train=False):
+    def run(self, agent=None, train=False, current_session=None, total_sessions=None):
         """
         Boucle principale du jeu.
         :param agent: Agent Q-learning si en mode `train` ou `model`.
         :param train: Indique si le jeu est en mode `train` (True) ou `model` (False).
+        :param current_session: Numéro de la session actuelle (utilisé en mode train).
+        :param total_sessions: Nombre total de sessions (utilisé en mode train).
         """
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks()
@@ -133,10 +135,12 @@ class Game:
                     self.board.get_state(),
                     score=self.score,
                     elapsed_time=elapsed_time,
-                    snake_length=len(self.board.snake.get_body())
+                    snake_length=len(self.board.snake.get_body()),
+                    current_session=current_session,
+                    total_sessions=total_sessions
                 )
-
-            clock.tick(self.speed)
+            if self.display_enabled:
+                clock.tick(self.speed)
 
     def handle_end_screen(self, title, reason, elapsed_time):
         """

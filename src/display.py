@@ -10,11 +10,15 @@ class Display:
         pygame.display.set_caption("Snake RL")
         self.font = pygame.font.SysFont(None, 36)  # Police pour afficher le score
 
-    def draw_board(self, board, score, elapsed_time, snake_length):
+    def draw_board(self, board, score, elapsed_time, snake_length, current_session=None, total_sessions=None):
         """
         Dessine le plateau de jeu et affiche le score.
         :param board: État du plateau.
         :param score: Score actuel.
+        :param elapsed_time: Temps écoulé en secondes.
+        :param snake_length: Longueur actuelle du serpent.
+        :param current_session: Numéro de la session actuelle (optionnel).
+        :param total_sessions: Nombre total de sessions (optionnel).
         """
         self.screen.fill((0, 0, 0))  # Fond noir
 
@@ -35,21 +39,19 @@ class Display:
                     pygame.Rect(y * self.cell_size, x * self.cell_size, self.cell_size, self.cell_size)
                 )
 
-        # # Affichage du score
-        # score_text = self.font.render(f"Score: {score}", True, (255, 255, 255))
-        # self.screen.blit(score_text, (self.board_size * self.cell_size + 20, 20))  # Score affiché à droite
-
         # Affichage des informations supplémentaires
-        self.draw_info(score, elapsed_time, snake_length)
+        self.draw_info(score, elapsed_time, snake_length, current_session, total_sessions)
 
         pygame.display.flip()
 
-    def draw_info(self, score, elapsed_time, snake_length):
+    def draw_info(self, score, elapsed_time, snake_length, current_session=None, total_sessions=None):
         """
         Affiche les informations supplémentaires à côté du terrain.
         :param score: Score actuel.
         :param elapsed_time: Temps écoulé en secondes.
         :param snake_length: Longueur actuelle du serpent.
+        :param current_session: Numéro de la session actuelle (optionnel).
+        :param total_sessions: Nombre total de sessions (optionnel).
         """
         # Affiche le score
         score_text = self.font.render(f"Score: {score}", True, (255, 255, 255))
@@ -62,6 +64,11 @@ class Display:
         # Affiche la longueur du serpent
         length_text = self.font.render(f"Length: {snake_length}", True, (255, 255, 255))
         self.screen.blit(length_text, (self.board_size * self.cell_size + 20, 100))
+
+        # Affiche la session actuelle si en mode entraînement
+        if current_session is not None and total_sessions is not None:
+            session_text = self.font.render(f"Session: {current_session}/{total_sessions}", True, (255, 255, 255))
+            self.screen.blit(session_text, (self.board_size * self.cell_size + 20, 140))
 
     def show_end_screen(self, title, score, elapsed_time, snake_length, reason):
         """
