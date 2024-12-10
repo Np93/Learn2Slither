@@ -185,8 +185,8 @@ def means_calcul(length, score, session):
     if session == 0:
         raise ValueError("Le nombre de sessions ne peut pas être 0.")
 
-    mean_length = round(length / session)
-    mean_score = round(score / session)
+    mean_length = round(length / session, 2)
+    mean_score = round(score / session, 2)
 
     return mean_length, mean_score
 
