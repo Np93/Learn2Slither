@@ -65,7 +65,7 @@ class Game:
         score_position = (self.board_size * self.cell_size + 20, 20)
         self.screen.blit(score_text, score_position)
 
-    def run(self, agent=None, train=False, current_session=None, total_sessions=None):
+    def run(self, agent=None, train=False, current_session=None, total_sessions=None, means_score=None, means_length=None):
         """
         Boucle principale du jeu.
         :param agent: Agent Q-learning si en mode `train` ou `model`.
@@ -115,6 +115,10 @@ class Game:
                     reason="Collision",
                     elapsed_time=elapsed_time
                 )
+                if train:
+                    length = len(self.board.snake.get_body())
+                    score = self.score
+                    return length, score
                 break
 
             # Vérifier la victoire
@@ -126,6 +130,10 @@ class Game:
                     reason="Length achieved",
                     elapsed_time=elapsed_time
                 )
+                if train:
+                    length = len(self.board.snake.get_body())
+                    score = self.score
+                    return length, score
                 break
             
             # self.print_action(action)
@@ -139,7 +147,9 @@ class Game:
                     elapsed_time=elapsed_time,
                     snake_length=len(self.board.snake.get_body()),
                     current_session=current_session,
-                    total_sessions=total_sessions
+                    total_sessions=total_sessions,
+                    means_score=means_score,
+                    means_length=means_length
                 )
             if self.display_enabled:
                 clock.tick(self.speed)

@@ -7,9 +7,9 @@ class Display:
         self.margin = 200  # Espace pour le score
         self.screen = pygame.display.set_mode((board_size * cell_size + self.margin, board_size * cell_size))
         pygame.display.set_caption("Snake RL")
-        self.font = pygame.font.SysFont(None, 36)  # Police pour afficher le score
+        self.font = pygame.font.SysFont(None, 30)  # Police pour afficher le score
 
-    def draw_board(self, board, score, elapsed_time, snake_length, current_session=None, total_sessions=None):
+    def draw_board(self, board, score, elapsed_time, snake_length, current_session=None, total_sessions=None, means_score=None, means_length=None):
         """
         Dessine le plateau de jeu et affiche le score.
         :param board: État du plateau.
@@ -39,11 +39,11 @@ class Display:
                 )
 
         # Affichage des informations supplémentaires
-        self.draw_info(score, elapsed_time, snake_length, current_session, total_sessions)
+        self.draw_info(score, elapsed_time, snake_length, current_session, total_sessions, means_score, means_length)
 
         pygame.display.flip()
 
-    def draw_info(self, score, elapsed_time, snake_length, current_session=None, total_sessions=None):
+    def draw_info(self, score, elapsed_time, snake_length, current_session=None, total_sessions=None, means_score=None, means_length=None):
         """
         Affiche les informations supplémentaires à côté du terrain.
         :param score: Score actuel.
@@ -52,6 +52,7 @@ class Display:
         :param current_session: Numéro de la session actuelle (optionnel).
         :param total_sessions: Nombre total de sessions (optionnel).
         """
+        max_text_width = self.margin - 40
         # Affiche le score
         score_text = self.font.render(f"Score: {score}", True, (255, 255, 255))
         self.screen.blit(score_text, (self.board_size * self.cell_size + 20, 20))
@@ -68,6 +69,22 @@ class Display:
         if current_session is not None and total_sessions is not None:
             session_text = self.font.render(f"Session: {current_session}/{total_sessions}", True, (255, 255, 255))
             self.screen.blit(session_text, (self.board_size * self.cell_size + 20, 140))
+        
+        if means_score is not None and means_length is not None:
+            means_score_text = self.render_text_clipped(f"Mean Score: {means_score}", max_text_width)
+            self.screen.blit(means_score_text, (self.board_size * self.cell_size + 20, 180))
+            means_length_text = self.render_text_clipped(f"Mean Length: {means_length}", max_text_width)
+            self.screen.blit(means_length_text, (self.board_size * self.cell_size + 20, 220))
+
+    def render_text_clipped(self, text, max_width):
+        font_size = 36
+        font = pygame.font.SysFont(None, font_size)
+        while font.size(text)[0] > max_width:  # Réduire la taille de la police
+            font_size -= 2
+            if font_size < 10:  # Taille minimale pour éviter l'invisibilité
+                break
+            font = pygame.font.SysFont(None, font_size)
+        return font.render(text, True, (255, 255, 255))
 
     def show_end_screen(self, title, score, elapsed_time, snake_length, reason):
         """

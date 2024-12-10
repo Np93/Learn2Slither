@@ -181,6 +181,15 @@ def modify_config(config, index, decrement):
     elif index == 7:  # Move Penalty
         config['rewards']['move_without_eating'] += -1 if decrement else 1
 
+def means_calcul(length, score, session):
+    if session == 0:
+        raise ValueError("Le nombre de sessions ne peut pas être 0.")
+
+    mean_length = round(length / session)
+    mean_score = round(score / session)
+
+    return mean_length, mean_score
+
 def main():
     # Initialisation de Pygame
     pygame.init()
@@ -193,9 +202,7 @@ def main():
     mode, local_config = show_lobby(screen, config)
 
     # Lire les paramètres locaux
-    print(local_config['board_size'])
     board_size = local_config.get("board_size", 10)
-    print(board_size)
     speed = local_config.get("speed", 1)
     display = local_config.get("display", True)
     victory_condition = local_config.get("victory_condition", 10)
@@ -219,12 +226,18 @@ def main():
             print("Modèle chargé à partir de la sauvegarde actuelle.")
         except FileNotFoundError:
             print("Aucun modèle actuel trouvé, démarrage à partir de zéro.")
-
+        total_length = 0
+        total_score = 0
+        means_length = 0
+        means_score = 0
         # Boucle d'entraînement
         for session in range(1, training_sessions + 1):
             game.reset()
             print(f"Début de la session {session}/{training_sessions}")
-            game.run(agent=agent, train=True, current_session=session, total_sessions=training_sessions)
+            length, score = game.run(agent=agent, train=True, current_session=session, total_sessions=training_sessions, means_score=means_score, means_length=means_length)
+            total_length += length
+            total_score += score
+            means_length, means_score = means_calcul(total_length, total_score, session)
 
             # Sauvegarder le modèle pour la session actuelle
             agent.save_model(model_name)
