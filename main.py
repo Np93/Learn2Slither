@@ -234,10 +234,13 @@ def main():
         for session in range(1, training_sessions + 1):
             game.reset()
             print(f"Début de la session {session}/{training_sessions}")
-            length, score = game.run(agent=agent, train=True, current_session=session, total_sessions=training_sessions, means_score=means_score, means_length=means_length)
-            total_length += length
-            total_score += score
-            means_length, means_score = means_calcul(total_length, total_score, session)
+            if display:
+                length, score = game.run(agent=agent, train=True, current_session=session, total_sessions=training_sessions, means_score=means_score, means_length=means_length)
+                total_length += length
+                total_score += score
+                means_length, means_score = means_calcul(total_length, total_score, session)
+            else:
+                game.run(agent=agent, train=True, current_session=session, total_sessions=training_sessions)
 
             # Sauvegarder le modèle pour la session actuelle
             agent.save_model(model_name)
