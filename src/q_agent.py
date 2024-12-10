@@ -20,7 +20,7 @@ class QLearningAgent:
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
-        self.q_table = {}  # Q-table dynamique
+        self.q_table = {}
 
     def get_global_state(self, vision):
         """
@@ -30,15 +30,15 @@ class QLearningAgent:
         :return: Tuple représentant l'état global.
         """
         state = []
-        for direction in ["up", "down", "left", "right"]:  # Ordre fixe pour cohérence
+        for direction in ["up", "down", "left", "right"]:
             cells = vision.get(direction, [])
-            truncated = []  # Vision tronquée
+            truncated = []
             for cell in cells:
                 truncated.append(cell)
-                if cell in ["S", "G"]:  # Arrête la vision dès qu'on rencontre 'S' ou 'G'
+                if cell in ["S", "G"]:
                     break
-            state.append((direction, tuple(truncated)))  # Inclure direction et vision tronquée
-        return tuple(state)  # Retourne une structure immuable
+            state.append((direction, tuple(truncated))) 
+        return tuple(state)
 
     def choose_action(self, vision):
         """
@@ -56,10 +56,19 @@ class QLearningAgent:
                 self.q_table[(global_state, action)] = 0  # Initialiser à 0
             q_values[action] = self.q_table[(global_state, action)]
         
+        # direction_to_action = {
+        #     "up": (-1, 0),
+        #     "down": (1, 0),
+        #     "left": (0, -1),
+        #     "right": (0, 1)
+        # }
+        # action_to_direction = {v: k for k, v in direction_to_action.items()}
+
         # print("\nÉtat global:", global_state)
         # print("Q-values pour chaque direction:")
         # for action, q_value in q_values.items():
-        #     print(f"  Action: {action}, Q-value: {q_value}")
+        #     direction = action_to_direction[action]
+        #     print(f"  Direction: {direction}, Action: {action}, Q-value: {q_value}")
 
         # Exploration vs exploitation
         if random.uniform(0, 1) < self.epsilon:  # Exploration

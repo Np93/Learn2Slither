@@ -126,27 +126,24 @@ def show_lobby(screen, config):
                     if minus and minus.collidepoint(event.pos):
                         modify_config(local_config, i, decrement=True)
                         buttons, input_box, display_button, play_button, train_button, model_button, quit_button = draw_lobby()
-                        print(f"Updated Board Size: {local_config['board_size']}")
                     elif plus and plus.collidepoint(event.pos):
                         modify_config(local_config, i, decrement=False)
                         buttons, input_box, display_button, play_button, train_button, model_button, quit_button = draw_lobby()
-                        print(f"Updated Board Size: {local_config['board_size']}")
 
                 # Vérifier le bouton Display
                 if display_button.collidepoint(event.pos):
                     local_config["display"] = not local_config["display"]
                     buttons, input_box, display_button, play_button, train_button, model_button, quit_button = draw_lobby()
-                    print({local_config['display']})
 
                 # Vérifier les boutons principaux
                 if play_button.collidepoint(event.pos):
-                    local_config["model"]["name"] = model_name  # Enregistrer le nom modifié
+                    local_config["model"]["name"] = model_name
                     return "player", local_config
                 elif train_button.collidepoint(event.pos):
-                    local_config["model"]["name"] = model_name  # Enregistrer le nom modifié
+                    local_config["model"]["name"] = model_name
                     return "train", local_config
                 elif model_button.collidepoint(event.pos):
-                    local_config["model"]["name"] = model_name  # Enregistrer le nom modifié
+                    local_config["model"]["name"] = model_name
                     return "model", local_config
                 elif quit_button.collidepoint(event.pos):
                     pygame.quit()

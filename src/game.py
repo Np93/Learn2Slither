@@ -13,8 +13,8 @@ class Game:
 
         # Génération du plateau et récupération du serpent et de la direction initiale
         self.board = Board(size=board_size, victory_condition=victory_condition)
-        self.board.snake, self.direction = self.board.generate_snake()  # Correctement récupéré ici
-        self.score = 0 # Initialisation du score
+        self.board.snake, self.direction = self.board.generate_snake()
+        self.score = 0
 
         if self.display_enabled:
             pygame.init()
@@ -62,7 +62,7 @@ class Game:
     def draw_score(self):
         """Affiche le score à côté du terrain."""
         score_text = self.font.render(f"Score: {self.score}", True, (255, 255, 255))
-        score_position = (self.board_size * self.cell_size + 20, 20)  # Affichage sur la droite
+        score_position = (self.board_size * self.cell_size + 20, 20)
         self.screen.blit(score_text, score_position)
 
     def run(self, agent=None, train=False, current_session=None, total_sessions=None):
@@ -127,6 +127,9 @@ class Game:
                     elapsed_time=elapsed_time
                 )
                 break
+            
+            # self.print_action(action)
+            # self.board.get_vision()
 
             # Affichage
             if self.display_enabled:
@@ -140,6 +143,18 @@ class Game:
                 )
             if self.display_enabled:
                 clock.tick(self.speed)
+
+    @staticmethod
+    def print_action(action):
+        direction_to_action = {
+            "up": (-1, 0),
+            "down": (1, 0),
+            "left": (0, -1),
+            "right": (0, 1)
+        }
+        action_to_direction = {v: k for k, v in direction_to_action.items()}
+        direction = action_to_direction[action]
+        print(direction)
 
     def handle_end_screen(self, title, reason, elapsed_time):
         """
