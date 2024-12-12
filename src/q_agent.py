@@ -138,7 +138,6 @@ class QLearningAgent:
             # Si une pomme verte 'G' était visible dans la vision initiale mais absente des directions finales
             if green_in_initial and "G" not in final_dir1 + final_dir2:
                 if "G" in vision1:  # La pomme était dans la direction dir1
-                    print(f"vision1 : {vision1}")
                     if "W" in final_dir1:
                         # Remplacer le dernier "0" avant le "W"
                         w_index = final_dir1.index("W")
@@ -147,7 +146,6 @@ class QLearningAgent:
                                 final_dir1[i] = "G"
                                 break
                 elif "G" in vision2:  # La pomme était dans la direction dir2
-                    print(f"vision2 : {vision2}")
                     if "W" in final_dir2:
                         # Remplacer le dernier "0" avant le "W"
                         w_index = final_dir2.index("W")
