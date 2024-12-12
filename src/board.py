@@ -1,6 +1,7 @@
 from src.snake import Snake
 import random
 
+
 class Board:
     def __init__(self, size=10, victory_condition=10, rewards=None):
         self.size = size
@@ -19,7 +20,7 @@ class Board:
         self.recent_positions = []
 
     def is_valid_head_position(self, x, y):
-        """Vérifie que la position de la tête n'est pas 
+        """Vérifie que la position de la tête n'est pas
         contre un mur avec un Game Over immédiat."""
         # Directions possibles : haut, bas, gauche, droite
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -34,7 +35,7 @@ class Board:
 
     def generate_snake(self):
         """
-        Génère la position initiale du serpent et 
+        Génère la position initiale du serpent et
         retourne également la direction initiale.
         """
         while True:
@@ -46,20 +47,24 @@ class Board:
                 random.shuffle(directions)
 
                 for direction in directions:
-                    snake_body = [(x, y), (x + direction[0], y + direction[1]), (x + 2 * direction[0], y + 2 * direction[1])]
+                    snake_body = [(x, y), (x + direction[0], y + direction[1]),
+                                  (x + 2 * direction[0], y + 2 * direction[1])]
 
-                    if all(0 <= sx < self.size and 0 <= sy < self.size for sx, sy in snake_body):
+                    if all(0 <= sx < self.size and
+                           0 <= sy < self.size for sx, sy in snake_body):
                         direction_from_tail = (
                             snake_body[0][0] - snake_body[1][0],  # x1 - x2
                             snake_body[0][1] - snake_body[1][1]   # y1 - y2
                         )
-                        return Snake(snake_body, self.size), direction_from_tail
+                        return (Snake(snake_body, self.size),
+                                direction_from_tail)
 
     def generate_apples(self):
         """
         Génère des pommes sur des cases libres.
         """
-        all_positions = set((x, y) for x in range(self.size) for y in range(self.size))
+        all_positions = set((x, y) for x in range(self.size)
+                            for y in range(self.size))
         occupied_positions = set(tuple(pos) for pos in self.snake.get_body())
         free_positions = list(all_positions - occupied_positions)
 
@@ -69,19 +74,21 @@ class Board:
 
     def generate_apple(self, apple_type):
         """
-        Génère une pomme unique sur une case libre, uniquement 
+        Génère une pomme unique sur une case libre, uniquement
         pour remplacer la pomme mangée.
         :param apple_type: Le type de la pomme à générer ("green" ou "red").
         """
         # Générer toutes les positions possibles du plateau
-        all_positions = set((x, y) for x in range(self.size) for y in range(self.size))
-        
+        all_positions = set((x, y) for x in range(self.size)
+                            for y in range(self.size))
+
         # Positions occupées par le serpent et les pommes existantes
-        occupied_positions = set(self.snake.get_body() + self.green_apples + self.red_apples)
-        
+        occupied_positions = set(self.snake.get_body() +
+                                 self.green_apples + self.red_apples)
+
         # Cases libres
         free_positions = list(all_positions - occupied_positions)
-        
+
         # Vérifier qu'il reste des cases libres
         if free_positions:
             new_apple = random.choice(free_positions)
@@ -92,7 +99,7 @@ class Board:
 
     def move_snake(self, direction):
         """
-        Déplace le serpent, gère les collisions et 
+        Déplace le serpent, gère les collisions et
         les interactions avec les pommes.
         """
         self.direction = direction
@@ -144,7 +151,7 @@ class Board:
         """
         Détermine ce que le serpent voit dans les 4 directions depuis sa tête.
         Chaque direction est explorée jusqu'à ce qu'un mur soit rencontré.
-        Retourne un dictionnaire indiquant 
+        Retourne un dictionnaire indiquant
         la vision complète dans chaque direction.
         """
         vision = {"up": [], "down": [], "left": [], "right": []}
@@ -183,9 +190,9 @@ class Board:
     @staticmethod
     def print_vision(vision):
         """
-        Affiche la vision dans le terminal dans un format 
+        Affiche la vision dans le terminal dans un format
         structuré avec la tête au centre.
-        :param vision: Dictionnaire contenant la vision pour 
+        :param vision: Dictionnaire contenant la vision pour
         chaque direction.
         """
         # Préparer les directions
@@ -194,7 +201,7 @@ class Board:
         left_vision = vision["left"]
         right_vision = vision["right"]
 
-        # Déterminer la hauteur maximale entre "up" et "down" 
+        # Déterminer la hauteur maximale entre "up" et "down"
         # pour l'alignement vertical
         max_vertical = max(len(up_vision), len(down_vision))
 
@@ -203,9 +210,11 @@ class Board:
         down_padding = [" "] * (max_vertical - len(down_vision))
 
         # Combiner les visions "up" et "down"
-        vertical_view = up_padding + list(reversed(up_vision)) + ["H"] + down_vision + down_padding
+        vertical_view = (up_padding +
+                         list(reversed(up_vision)) + ["H"] +
+                         down_vision + down_padding)
 
-        # Déterminer la longueur maximale entre "left" et "right" 
+        # Déterminer la longueur maximale entre "left" et "right"
         # pour l'alignement horizontal
         max_horizontal = max(len(left_vision), len(right_vision))
         left_padding = [" "] * (max_horizontal - len(left_vision))
@@ -233,7 +242,7 @@ class Board:
     def calculate_reward(self, action_result):
         """
         Calcule la récompense en fonction du résultat de l'action.
-        :param action_result: Résultat de l'action 
+        :param action_result: Résultat de l'action
         ("green", "red", None ou False).
         :return: Récompense associée.
         """
@@ -253,13 +262,13 @@ class Board:
 
     def is_victory(self):
         """
-        Vérifie si la longueur du serpent atteint 
+        Vérifie si la longueur du serpent atteint
         la condition de victoire (10 cellules).
         :return: True si victoire, sinon False.
         """
         return len(self.snake.get_body()) >= self.victory_condition
 
     def update_direction(self, new_direction):
-        """Met à jour la direction uniquement si elle ne 
+        """Met à jour la direction uniquement si elle ne
         correspond pas à un demi-tour."""
         self.direction = new_direction
