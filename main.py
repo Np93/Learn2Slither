@@ -3,22 +3,26 @@ import pygame
 from src.game import Game
 from src.q_agent import QLearningAgent
 
+
 def load_config(config_file="config.yaml"):
     """Charge la configuration depuis config.yaml."""
     with open(config_file, "r") as file:
         return yaml.safe_load(file)
 
+
 def show_lobby(screen, config):
     """
-    Affiche le lobby interactif pour choisir le mode et modifier les paramètres.
-    Permet aussi de modifier directement le nom du modèle et de gérer les boutons + et -.
+    Affiche le lobby interactif pour choisir le mode et
+    modifier les paramètres.
+    Permet aussi de modifier directement le nom
+    du modèle et de gérer les boutons + et -.
     """
     font = pygame.font.SysFont(None, 36)
     title_font = pygame.font.SysFont(None, 72)
 
     # Copie des paramètres pour modifications temporaires
     local_config = config.copy()
-    local_config["rewards"] = config["rewards"].copy()  # Copie des récompenses pour éviter les conflits
+    local_config["rewards"] = config["rewards"].copy()
 
     # Zone de texte pour model_name
     input_active = False  # Suivi de l'état actif/inactif de la zone de texte
@@ -29,7 +33,8 @@ def show_lobby(screen, config):
         screen.fill((0, 0, 0))  # Fond noir
 
         # Titre
-        title_text = title_font.render("Snake RL - Lobby", True, (255, 255, 255))
+        title_text = title_font.render("Snake RL - Lobby",
+                                       True, (255, 255, 255))
         screen.blit(title_text, (200, 20))
 
         # Paramètres affichés
@@ -69,9 +74,9 @@ def show_lobby(screen, config):
         display_label = font.render(param_labels[-1], True, (255, 255, 255))
         screen.blit(display_label, (100, param_positions[-1]))
         display_button = pygame.Rect(500, param_positions[-1], 110, 30)
-        pygame.draw.rect(screen, (0, 255, 255), display_button)  # Cyan pour différencier
+        pygame.draw.rect(screen, (0, 255, 255), display_button)
         button_text = font.render("ON/OFF", True, (0, 0, 0))
-        text_rect = button_text.get_rect(center=display_button.center)  # Centrer le texte
+        text_rect = button_text.get_rect(center=display_button.center)
         screen.blit(button_text, text_rect)
 
         # Zone de texte pour model_name
@@ -80,7 +85,8 @@ def show_lobby(screen, config):
 
         # Zone interactive
         input_box = pygame.Rect(250, 550, 300, 36)
-        pygame.draw.rect(screen, (255, 255, 255), input_box, 2 if input_active else 1)
+        pygame.draw.rect(screen, (255, 255, 255),
+                         input_box, 2 if input_active else 1)
         model_text = font.render(model_name, True, (255, 255, 255))
         screen.blit(model_text, (input_box.x + 10, input_box.y + 5))
 
@@ -102,10 +108,20 @@ def show_lobby(screen, config):
 
         pygame.display.flip()
 
-        return buttons, input_box, display_button, play_button, train_button, model_button, quit_button
+        return (buttons, input_box, display_button, play_button,
+                train_button, model_button, quit_button
+                )
 
     # Dessiner le lobby initial
-    buttons, input_box, display_button, play_button, train_button, model_button, quit_button = draw_lobby()
+    (
+        buttons,
+        input_box,
+        display_button,
+        play_button,
+        train_button,
+        model_button,
+        quit_button,
+    ) = draw_lobby()
 
     # Gestion des interactions
     while True:
@@ -125,15 +141,39 @@ def show_lobby(screen, config):
                 for i, (minus, plus) in enumerate(buttons):
                     if minus and minus.collidepoint(event.pos):
                         modify_config(local_config, i, decrement=True)
-                        buttons, input_box, display_button, play_button, train_button, model_button, quit_button = draw_lobby()
+                        (
+                            buttons,
+                            input_box,
+                            display_button,
+                            play_button,
+                            train_button,
+                            model_button,
+                            quit_button,
+                        ) = draw_lobby()
                     elif plus and plus.collidepoint(event.pos):
                         modify_config(local_config, i, decrement=False)
-                        buttons, input_box, display_button, play_button, train_button, model_button, quit_button = draw_lobby()
+                        (
+                            buttons,
+                            input_box,
+                            display_button,
+                            play_button,
+                            train_button,
+                            model_button,
+                            quit_button,
+                        ) = draw_lobby()
 
                 # Vérifier le bouton Display
                 if display_button.collidepoint(event.pos):
                     local_config["display"] = not local_config["display"]
-                    buttons, input_box, display_button, play_button, train_button, model_button, quit_button = draw_lobby()
+                    (
+                        buttons,
+                        input_box,
+                        display_button,
+                        play_button,
+                        train_button,
+                        model_button,
+                        quit_button,
+                    ) = draw_lobby()
 
                 # Vérifier les boutons principaux
                 if play_button.collidepoint(event.pos):
@@ -157,7 +197,15 @@ def show_lobby(screen, config):
                     model_name += event.unicode  # Ajouter le caractère saisi
 
                 # Redessiner le lobby après modification
-                buttons, input_box, display_button, play_button, train_button, model_button, quit_button = draw_lobby()
+                (
+                    buttons,
+                    input_box,
+                    display_button,
+                    play_button,
+                    train_button,
+                    model_button,
+                    quit_button,
+                ) = draw_lobby()
 
 
 def modify_config(config, index, decrement):
@@ -165,13 +213,25 @@ def modify_config(config, index, decrement):
     Modifie un paramètre dans la configuration locale.
     """
     if index == 0:  # Board Size
-        config['board_size'] = max(5, min(40, config['board_size'] - 1 if decrement else config['board_size'] + 1))
+        config['board_size'] = max(
+            5, min(40, config['board_size'] - 1 if decrement
+                   else config['board_size'] + 1)
+        )
     elif index == 1:  # Speed
-        config['speed'] = max(1, min(20, config['speed'] - 1 if decrement else config['speed'] + 1))
+        config['speed'] = max(
+            1, min(20, config['speed'] - 1 if decrement
+                   else config['speed'] + 1)
+        )
     elif index == 2:  # Victory Condition
-        config['victory_condition'] = max(5, min(50, config['victory_condition'] - 1 if decrement else config['victory_condition'] + 1))
+        config['victory_condition'] = max(
+            5, min(35, config['victory_condition'] - 1 if decrement
+                   else config['victory_condition'] + 1)
+        )
     elif index == 3:  # Sessions
-        config['training']['sessions'] = max(1, config['training']['sessions'] - 1 if decrement else config['training']['sessions'] + 1)
+        config['training']['sessions'] = max(
+            1, config['training']['sessions'] - 1 if decrement
+            else config['training']['sessions'] + 1
+        )
     elif index == 4:  # Green Apple Reward
         config['rewards']['green_apple'] += -1 if decrement else 1
     elif index == 5:  # Red Apple Reward
@@ -180,6 +240,7 @@ def modify_config(config, index, decrement):
         config['rewards']['collision'] += -10 if decrement else 10
     elif index == 7:  # Move Penalty
         config['rewards']['move_without_eating'] += -1 if decrement else 1
+
 
 def means_calcul(length, score, session):
     if session == 0:
@@ -190,7 +251,11 @@ def means_calcul(length, score, session):
 
     return mean_length, mean_score
 
+
 def main():
+    """
+    Fonction principale pour initialiser et exécuter le programme.
+    """
     # Initialisation de Pygame
     pygame.init()
     screen = pygame.display.set_mode((800, 700))
@@ -235,12 +300,25 @@ def main():
             game.reset()
             print(f"Début de la session {session}/{training_sessions}")
             if display:
-                length, score = game.run(agent=agent, train=True, current_session=session, total_sessions=training_sessions, means_score=means_score, means_length=means_length)
+                length, score = game.run(
+                    agent=agent,
+                    train=True,
+                    current_session=session,
+                    total_sessions=training_sessions,
+                    means_score=means_score,
+                    means_length=means_length,
+                )
                 total_length += length
                 total_score += score
-                means_length, means_score = means_calcul(total_length, total_score, session)
+                means_length, means_score = means_calcul(total_length,
+                                                         total_score, session)
             else:
-                game.run(agent=agent, train=True, current_session=session, total_sessions=training_sessions)
+                game.run(
+                    agent=agent,
+                    train=True,
+                    current_session=session,
+                    total_sessions=training_sessions
+                )
 
             # Sauvegarder le modèle pour la session actuelle
             agent.save_model(model_name)
@@ -249,7 +327,8 @@ def main():
             if session in {1, 10, 100}:
                 agent.save_model(f"{model_name}_{session}_sessions.pkl")
             agent.decay_epsilon()
-            print(f"\nSession terminée. Nouvelle valeur d'epsilon : {agent.epsilon}\n")
+            print(f"\nSession terminée. Nouvelle valeur "
+                  f"d'epsilon : {agent.epsilon}\n")
     elif mode == "model":
         agent.epsilon = 0.0
         try:
@@ -262,6 +341,7 @@ def main():
         game.run(agent=agent, train=False)
     else:
         print("Mode invalide.")
+
 
 if __name__ == "__main__":
     main()
