@@ -35,10 +35,132 @@ class QLearningAgent:
             truncated = []
             for cell in cells:
                 truncated.append(cell)
-                if cell in ["S", "G"]:
+                if cell in ["S", "G", "W"]:
                     break
             state.append((direction, tuple(truncated))) 
         return tuple(state)
+    
+    def get_resized_vision(self, vision, total_visible=9):
+        """
+        Redimensionne les visions opposées (up-down ou left-right) proportionnellement
+        pour une taille fixe de vision (10x10) tout en respectant les proportions initiales.
+        Ajoute un mur 'W' à la fin si nécessaire.
+
+        :param vision: Dictionnaire des visions brutes avec les directions 'up', 'down', 'left', 'right'.
+        :param total_visible: Nombre total de cases visibles entre deux directions opposées (par défaut 9).
+        :return: Dictionnaire avec la vision redimensionnée.
+        """
+        resized_vision = {}
+        directions_pairs = [("up", "down"), ("left", "right")]
+
+        for dir1, dir2 in directions_pairs:
+            # Extraire les visions brutes
+            # print(dir1)
+            # print(dir2)
+            vision1 = vision[dir1]
+            vision2 = vision[dir2]
+
+            # Verrouiller les deux premières cases
+            locked_dir1 = vision1[:2]
+            locked_dir2 = vision2[:2]
+
+            # Extraire les cases restantes
+            remaining_dir1 = vision1[2:]
+            remaining_dir2 = vision2[2:]
+
+            # Vérifier si une pomme verte 'G' est visible dans la vision initiale
+            green_in_initial = "G" in (vision1 + vision2)
+
+            # Calcul de la taille maximale de vision (sans la tête)
+            max_visible_per_direction = (self.board_size - 1) // 2 - 2
+
+            # Calcul des proportions initiales
+            dir1_visible = len([cell for cell in remaining_dir1 if cell not in ["W"]])
+            dir2_visible = len([cell for cell in remaining_dir2 if cell not in ["W"]])
+            combined_visible = dir1_visible + dir2_visible
+
+            prop_dir1 = dir1_visible / max(1, combined_visible)
+            prop_dir2 = dir2_visible / max(1, combined_visible)
+
+            # Calcul des cases restantes à attribuer
+            remaining_total_visible = total_visible - len(locked_dir1) - len(locked_dir2)
+            count_dir1 = max(0, round(prop_dir1 * remaining_total_visible))
+            count_dir2 = max(0, remaining_total_visible - count_dir1)
+
+            # Redimensionner séparément chaque direction
+            resized_dir1 = [cell for cell in remaining_dir1 if cell not in ["W"]][:count_dir1]
+            resized_dir2 = [cell for cell in remaining_dir2 if cell not in ["W"]][:count_dir2]
+
+            # Construire les directions finales
+            final_dir1 = locked_dir1 + resized_dir1
+            final_dir2 = locked_dir2 + resized_dir2
+
+            # Ajout des cases pour respecter total_visible tout en maintenant les proportions
+            while len(final_dir1) + len(final_dir2) < total_visible:
+                # Ajouter un '0' à la direction avec la proportion la plus basse
+                if len(final_dir1) / max(1, len(final_dir1) + len(final_dir2)) < prop_dir1:
+                    final_dir1.append("0")
+                elif len(final_dir2) / max(1, len(final_dir1) + len(final_dir2)) < prop_dir2:
+                    final_dir2.append("0")
+                else:
+                    # Si proportions égales, ajouter pour équilibrer les longueurs
+                    if len(final_dir1) <= len(final_dir2):
+                        final_dir1.append("0")
+                    else:
+                        final_dir2.append("0")
+
+            # Réduire en cas de surplus
+            while len(final_dir1) + len(final_dir2) > total_visible:
+                if len(final_dir1) > len(final_dir2):
+                    final_dir1.pop()
+                else:
+                    final_dir2.pop()
+
+            # Ajouter un mur 'W' à la fin si nécessaire
+            if "W" not in final_dir1:
+                final_dir1.append("W")
+            if "W" not in final_dir2:
+                final_dir2.append("W")
+
+            # Ajuster si des directions opposées n'atteignent pas le total_visible
+            while len(final_dir1) + len(final_dir2) < total_visible + 2:
+                if len(final_dir1) >= len(final_dir2):
+                    if "W" in final_dir1:
+                        final_dir1.insert(-1, "0")
+                    else:
+                        final_dir1.append("0")
+                else:
+                    if "W" in final_dir2:
+                        final_dir2.insert(-1, "0")
+                    else:
+                        final_dir2.append("0")
+
+            # Si une pomme verte 'G' était visible dans la vision initiale mais absente des directions finales
+            if green_in_initial and "G" not in final_dir1 + final_dir2:
+                if "G" in vision1:  # La pomme était dans la direction dir1
+                    print(f"vision1 : {vision1}")
+                    if "W" in final_dir1:
+                        # Remplacer le dernier "0" avant le "W"
+                        w_index = final_dir1.index("W")
+                        for i in range(w_index - 1, -1, -1):
+                            if final_dir1[i] == "0":
+                                final_dir1[i] = "G"
+                                break
+                elif "G" in vision2:  # La pomme était dans la direction dir2
+                    print(f"vision2 : {vision2}")
+                    if "W" in final_dir2:
+                        # Remplacer le dernier "0" avant le "W"
+                        w_index = final_dir2.index("W")
+                        for i in range(w_index - 1, -1, -1):
+                            if final_dir2[i] == "0":
+                                final_dir2[i] = "G"
+                                break
+
+            # Stocker les visions redimensionnées
+            resized_vision[dir1] = final_dir1
+            resized_vision[dir2] = final_dir2
+
+        return resized_vision
 
     def choose_action(self, vision):
         """
@@ -47,7 +169,11 @@ class QLearningAgent:
         :return: Une action valide (tuple représentant une direction, ex : (-1, 0)).
         """
         # Obtenir l'état global
-        global_state = self.get_global_state(vision)
+        if self.board_size == 10:
+            global_state = self.get_global_state(vision)
+        else:
+            new_vision = self.get_resized_vision(vision)
+            global_state = self.get_global_state(new_vision)
         q_values = {}
         
         # Initialiser les Q-values pour chaque action si elles n'existent pas
