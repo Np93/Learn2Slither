@@ -97,9 +97,11 @@ class Game:
 
             # Déterminer l'action
             if agent:
+                # direction = self.board.direction
                 vision = self.board.get_vision()  # Obtenir la vision actuelle
                 action = agent.choose_action(
                     vision=vision,
+                    # current_direction=direction
                 )
                 self.board.update_direction(action)
 

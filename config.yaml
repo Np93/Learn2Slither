@@ -1,7 +1,7 @@
 board_size: 10  # Taille du plateau (10x10)
 speed: 10        # Vitesse en cases par seconde
 display: true   # Active ou désactive l'affichage graphique
-victory_condition: 10 # nombre de case de la taille du serpent pour definir la victoire
+victory_condition: 35 # nombre de case de la taille du serpent pour definir la victoire
 mode: model  # Peut être "player" ou "model" ou train
 rewards:
   green_apple: 50
@@ -11,4 +11,4 @@ rewards:
 training:
   sessions: 10000
 model:
-  name: "model.pkl"
+  name: "model_lenght.pkl"

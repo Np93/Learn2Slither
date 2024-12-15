@@ -177,7 +177,7 @@ class QLearningAgent:
 
         return resized_vision
 
-    def choose_action(self, vision):
+    def choose_action(self, vision):  # , current_direction):
         """
         Choisit une action basée sur les Q-values de
         l'état global avec exploration.
@@ -232,6 +232,12 @@ class QLearningAgent:
         else:  # Exploitation
             # Choisir l'action avec la meilleure Q-value
             action = max(self.actions, key=lambda a: q_values[a])
+            # opposite_direction = (-current_direction[0],
+            #                       -current_direction[1])
+            # action = max(
+            #     (a for a in self.actions if a != opposite_direction),
+            #     key=lambda a: q_values[a]
+            # )
             # print(f"Exploitation choisie. Meilleure direction : "
             #       f"{action} avec Q-value : {q_values[action]}")
 
