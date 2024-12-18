@@ -3,6 +3,7 @@ speed: 10        # Vitesse en cases par seconde
 display: true   # Active ou désactive l'affichage graphique
 victory_condition: 35 # nombre de case de la taille du serpent pour definir la victoire
 mode: model  # Peut être "player" ou "model" ou train
+step_by_step: false
 rewards:
   green_apple: 50
   red_apple: -45

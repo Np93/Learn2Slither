@@ -62,8 +62,10 @@ class Game:
                                            new_direction)) == (0, 0)
                     if not is_reverse:
                         self.board.update_direction(new_direction)
+                        return True
                     else:
                         print("Tentative de demi-tour évitée pour le joueur.")
+        return False           
 
     def draw_score(self):
         """Affiche le score à côté du terrain."""
@@ -72,7 +74,26 @@ class Game:
         score_position = (self.board_size * self.cell_size + 20, 20)
         self.screen.blit(score_text, score_position)
 
-    def run(self, agent=None, train=False, current_session=None,
+    def wait_for_space(self, agent):
+        """
+        Pause le jeu jusqu'à ce que l'utilisateur appuie sur la barre espace.
+        """
+        paused = True
+        while paused:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                if event.type == pygame.KEYDOWN:
+                    # Reprendre si barre espace est pressée
+                    if event.key == pygame.K_SPACE:
+                        paused = False
+            if self.display_enabled and agent is None:
+                if self.handle_events():
+                    paused = False
+
+    def run(self, step, agent=None, train=False, current_session=None,
             total_sessions=None, means_score=None, means_length=None):
         """
         Boucle principale du jeu.
@@ -92,6 +113,9 @@ class Game:
             # Si en mode joueur, gérer les événements clavier
             if self.display_enabled and agent is None:
                 self.handle_events()
+
+            if step:
+                self.wait_for_space(agent)
 
             elapsed_time = (pygame.time.get_ticks() - start_time) / 1000
 

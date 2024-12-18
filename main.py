@@ -47,7 +47,8 @@ def show_lobby(screen, config):
             f"Red Apple Reward: {local_config['rewards']['red_apple']}",
             f"Collision Penalty: {local_config['rewards']['collision']}",
             f"Move Penalty: {local_config['rewards']['move_without_eating']}",
-            f"Display: {'ON' if local_config['display'] else 'OFF'}"
+            f"Display: {'ON' if local_config['display'] else 'OFF'}",
+            f"Step-by-step: {'ON' if local_config['step_by_step'] else 'OFF'}"
         ]
         param_positions = [100 + i * 50 for i in range(len(param_labels))]
 
@@ -71,52 +72,60 @@ def show_lobby(screen, config):
             buttons.append((minus_button, plus_button))
 
         # Affichage du paramètre Display avec un bouton unique
-        display_label = font.render(param_labels[-1], True, (255, 255, 255))
-        screen.blit(display_label, (100, param_positions[-1]))
-        display_button = pygame.Rect(500, param_positions[-1], 110, 30)
+        display_label = font.render(param_labels[-2], True, (255, 255, 255))
+        screen.blit(display_label, (100, param_positions[-2]))
+        display_button = pygame.Rect(500, param_positions[-2], 110, 30)
         pygame.draw.rect(screen, (0, 255, 255), display_button)
         button_text = font.render("ON/OFF", True, (0, 0, 0))
         text_rect = button_text.get_rect(center=display_button.center)
         screen.blit(button_text, text_rect)
 
+        step_label = font.render(param_labels[-1], True, (255, 255, 255))
+        screen.blit(step_label, (100, param_positions[-1]))
+        step_button = pygame.Rect(500, param_positions[-1], 110, 30)
+        pygame.draw.rect(screen, (128, 0, 128), step_button)
+        step_text = font.render("ON/OFF", True, (0, 0, 0))
+        step_text_rect = step_text.get_rect(center=step_button.center)
+        screen.blit(step_text, step_text_rect)
+
         # Zone de texte pour model_name
         model_label = font.render("Model Name:", True, (255, 255, 255))
-        screen.blit(model_label, (100, 550))
+        screen.blit(model_label, (100, 600))
 
         # Zone interactive
-        input_box = pygame.Rect(250, 550, 300, 36)
+        input_box = pygame.Rect(250, 600, 300, 36)
         pygame.draw.rect(screen, (255, 255, 255),
                          input_box, 2 if input_active else 1)
         model_text = font.render(model_name, True, (255, 255, 255))
         screen.blit(model_text, (input_box.x + 10, input_box.y + 5))
 
         # Boutons principaux (Play, Train, Model, Quit)
-        play_button = pygame.Rect(100, 600, 150, 50)
-        train_button = pygame.Rect(270, 600, 150, 50)
-        model_button = pygame.Rect(440, 600, 150, 50)
-        quit_button = pygame.Rect(610, 600, 150, 50)
+        play_button = pygame.Rect(100, 650, 150, 50)
+        train_button = pygame.Rect(270, 650, 150, 50)
+        model_button = pygame.Rect(440, 650, 150, 50)
+        quit_button = pygame.Rect(610, 650, 150, 50)
 
         pygame.draw.rect(screen, (0, 255, 0), play_button)
         pygame.draw.rect(screen, (0, 0, 255), train_button)
         pygame.draw.rect(screen, (255, 255, 0), model_button)
         pygame.draw.rect(screen, (255, 0, 0), quit_button)
 
-        screen.blit(font.render("Play", True, (0, 0, 0)), (130, 615))
-        screen.blit(font.render("Train", True, (0, 0, 0)), (300, 615))
-        screen.blit(font.render("Model", True, (0, 0, 0)), (475, 615))
-        screen.blit(font.render("Quit", True, (0, 0, 0)), (640, 615))
+        screen.blit(font.render("Play", True, (0, 0, 0)), (130, 665))
+        screen.blit(font.render("Train", True, (0, 0, 0)), (300, 665))
+        screen.blit(font.render("Model", True, (0, 0, 0)), (475, 665))
+        screen.blit(font.render("Quit", True, (0, 0, 0)), (640, 665))
 
         pygame.display.flip()
 
-        return (buttons, input_box, display_button, play_button,
-                train_button, model_button, quit_button
-                )
+        return (buttons, input_box, display_button, step_button, play_button,
+                train_button, model_button, quit_button)
 
     # Dessiner le lobby initial
     (
         buttons,
         input_box,
         display_button,
+        step_button,
         play_button,
         train_button,
         model_button,
@@ -145,6 +154,7 @@ def show_lobby(screen, config):
                             buttons,
                             input_box,
                             display_button,
+                            step_button,
                             play_button,
                             train_button,
                             model_button,
@@ -156,6 +166,7 @@ def show_lobby(screen, config):
                             buttons,
                             input_box,
                             display_button,
+                            step_button,
                             play_button,
                             train_button,
                             model_button,
@@ -169,6 +180,20 @@ def show_lobby(screen, config):
                         buttons,
                         input_box,
                         display_button,
+                        step_button,
+                        play_button,
+                        train_button,
+                        model_button,
+                        quit_button,
+                    ) = draw_lobby()
+                
+                if step_button.collidepoint(event.pos):
+                    local_config["step_by_step"] = not local_config["step_by_step"]
+                    (
+                        buttons,
+                        input_box,
+                        display_button,
+                        step_button,
                         play_button,
                         train_button,
                         model_button,
@@ -201,6 +226,7 @@ def show_lobby(screen, config):
                     buttons,
                     input_box,
                     display_button,
+                    step_button,
                     play_button,
                     train_button,
                     model_button,
@@ -258,7 +284,7 @@ def main():
     """
     # Initialisation de Pygame
     pygame.init()
-    screen = pygame.display.set_mode((800, 700))
+    screen = pygame.display.set_mode((800, 750))
 
     # Charger la configuration
     config = load_config()
@@ -274,6 +300,7 @@ def main():
     rewards = local_config["rewards"]
     training_sessions = local_config["training"]["sessions"]
     model_name = local_config["model"]["name"]
+    s_b_s = local_config.get("step_by_step", False)
 
     # Initialiser les actions et l'agent
     actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -283,7 +310,7 @@ def main():
     game = Game(board_size, display, speed, victory_condition, mode)
 
     if mode == "player":
-        game.run()
+        game.run(step=s_b_s)
     elif mode == "train":
         # Charger l'état actuel si disponible
         try:
@@ -301,6 +328,7 @@ def main():
             print(f"Début de la session {session}/{training_sessions}")
             if display:
                 length, score = game.run(
+                    step=s_b_s,
                     agent=agent,
                     train=True,
                     current_session=session,
@@ -314,6 +342,7 @@ def main():
                                                          total_score, session)
             else:
                 game.run(
+                    step=s_b_s,
                     agent=agent,
                     train=True,
                     current_session=session,
@@ -338,7 +367,7 @@ def main():
             print(f"Erreur : Modèle {model_name} introuvable.")
             return
 
-        game.run(agent=agent, train=False)
+        game.run(step=s_b_s, agent=agent, train=False)
     else:
         print("Mode invalide.")
 
