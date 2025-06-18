@@ -78,8 +78,8 @@ poetry run python3 main.py
 **Actions**: The agent chooses one of the 4 directions based on what it sees
 **Learning**: Q-learning updates a Q-table associating states to actions
 **Rewards**:
-    +50 for a green apple 🍏
-    -45 for a red apple 🍎
+    +50 for a green apple
+    -45 for a red apple 
     -100 for a collision
     -1 per move to encourage efficiency
 
